@@ -13,7 +13,7 @@
 		android:name=".ServiceApplication"
 		android:icon="@drawable/app_icon"
 		android:label="@string/app_name" >
-		<activity android:name=".MainActivity" >
+		<activity android:name=".MainScreen" >
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
 				<category android:name="android.intent.category.LAUNCHER" />

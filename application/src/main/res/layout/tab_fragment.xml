@@ -1,35 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context="com.mniip.bananapeel.MainActivity">
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-    <android.support.v4.widget.DrawerLayout android:layout_height="match_parent"
+    <ScrollView
         android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:layout_above="@+id/bottom_bar">
 
         <LinearLayout
-            android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="wrap_content"
+            android:orientation="vertical" >
 
-            <android.support.v4.view.ViewPager
+            <TextView
                 android:layout_width="match_parent"
-                android:id="@+id/view_pager"
-                android:layout_height="match_parent"
-                android:visibility="visible">
-
-                <android.support.v4.view.PagerTabStrip android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/pager_tab_strip">
-                </android.support.v4.view.PagerTabStrip>
-
-            </android.support.v4.view.ViewPager>
-
+                android:layout_height="wrap_content"
+                android:id="@+id/text_area" />
         </LinearLayout>
-
-    </android.support.v4.widget.DrawerLayout>
+    </ScrollView>
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -62,11 +51,10 @@
             android:layout_height="wrap_content"
             android:id="@+id/send_button"
             android:layout_alignParentRight="true"
-            tools:layout_alignTop="@+id/input_box"
+            android:layout_alignTop="@+id/input_box"
             android:layout_alignBottom="@+id/input_box"
             android:src="@android:drawable/ic_menu_send"
             style="?android:attr/borderlessButtonStyle"
             android:minWidth="0dp" />
     </RelativeLayout>
-
 </RelativeLayout>

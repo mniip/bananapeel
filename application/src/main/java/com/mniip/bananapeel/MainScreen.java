@@ -40,7 +40,7 @@ public class MainScreen extends FragmentActivity
 		@Override
 		public int getCount()
 		{
-			return 6;
+			return 100;
 		}
 	}
 

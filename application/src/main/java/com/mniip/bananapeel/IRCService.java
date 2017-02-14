@@ -1,10 +1,11 @@
 package com.mniip.bananapeel;
 
-import android.app.Service;
 import android.app.Notification;
-import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 public class IRCService extends Service
@@ -15,9 +16,10 @@ public class IRCService extends Service
 		Log.d("BananaPeel", "Service created");
 		super.onCreate();
 
-		Notification n = new Notification.Builder(this)
+		Notification n = new NotificationCompat.Builder(this)
 			.setSmallIcon(R.drawable.app_icon)
 			.setContentTitle("Notification")
+			.setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainScreen.class), 0))
 			.build();
 		startForeground(1, n);
 

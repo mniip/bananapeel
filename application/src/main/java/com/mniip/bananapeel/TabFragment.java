@@ -2,10 +2,12 @@ package com.mniip.bananapeel;
 
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.support.v7.widget.RecyclerView;
 
 public class TabFragment extends Fragment
 {
@@ -24,12 +26,18 @@ public class TabFragment extends Fragment
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+    public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState)
     {
-        View view = inflater.inflate(R.layout.tab_fragment, container, false);
+        View view = inflater.inflate(R.layout.tab_fragment, parent, false);
         if(savedInstanceState != null)
             position = savedInstanceState.getInt("position");
-        ((TextView)view.findViewById(R.id.text_area)).setText(position + "");
+
+        RecyclerView recycler = (RecyclerView)view.findViewById(R.id.recycler);
+        recycler.setLayoutManager(new LinearLayoutManager(getContext()));
+        recycler.setAdapter(new TextLineAdapter(position));
+        if(savedInstanceState == null)
+            recycler.scrollToPosition(recycler.getAdapter().getItemCount() - 1);
         return view;
     }
+
 }

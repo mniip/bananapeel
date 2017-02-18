@@ -48,7 +48,7 @@ public class TabFragment extends Fragment
             public void onClick(View v)
             {
                 EditText edit = (EditText) ((ViewGroup) v.getParent()).findViewById(R.id.input_box);
-                ServiceApplication.getService().tabs.get(tabId).putLine(edit.getText().toString());
+                ServiceApplication.getService().onCommandEntered(tabId, edit.getText().toString());
                 edit.setText("");
             }
         });

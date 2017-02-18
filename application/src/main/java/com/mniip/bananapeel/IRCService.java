@@ -85,4 +85,15 @@ public class IRCService extends Service
 			listener.onTabRemoved(tabId);
 		tabs.delete(tabId);
 	}
+
+	public void onCommandEntered(int tabId, String str)
+	{
+		Tab t = tabs.get(tabId);
+		if (t != null)
+		{
+			t.putLine(str);
+		}
+	}
 }
+// ServiceApplication.getService().tabs.get(tabId).putLine(edit.getText().toString());
+//id tab string

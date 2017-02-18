@@ -161,9 +161,11 @@ public class MainScreen extends FragmentActivity
 		@Override
 		public Fragment getItem(int position)
 		{
+			Integer tabId = tabIds.get(position);
 			TabFragment fragment = new TabFragment();
-
-				fragment.setId(tabIds.get(position));
+			if (tabId == null)
+				tabId = -1;
+			fragment.setId(tabId);
 			return fragment;
 		}
 
@@ -172,7 +174,7 @@ public class MainScreen extends FragmentActivity
 		{
 			Integer tabId = tabIds.get(position);
 			if (tabId != null)
-			return service.tabs.get(tabIds.get(position)).getTitle();
+				return service.tabs.get(tabId).getTitle();
 			else return "";
 		}
 

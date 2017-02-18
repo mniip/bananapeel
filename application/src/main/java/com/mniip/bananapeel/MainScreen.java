@@ -144,9 +144,13 @@ public class MainScreen extends FragmentActivity
 
 		public void onTabRemoved(int tabId)
 		{
-			tabIds.remove(tabPositions.get(tabId));
-			tabPositions.delete(tabId);
-			notifyDataSetChanged();
+			Integer tabPos = tabPositions.get(tabId);
+			if (tabPos != null)
+			{
+				tabIds.remove(tabPos);
+				tabPositions.delete(tabId);
+				notifyDataSetChanged();
+			}
 		}
 
 		public void onTabTitleChanged(int tabId)
@@ -158,14 +162,18 @@ public class MainScreen extends FragmentActivity
 		public Fragment getItem(int position)
 		{
 			TabFragment fragment = new TabFragment();
-			fragment.setId(tabIds.get(position));
+
+				fragment.setId(tabIds.get(position));
 			return fragment;
 		}
 
 		@Override
 		public String getPageTitle(int position)
 		{
+			Integer tabId = tabIds.get(position);
+			if (tabId != null)
 			return service.tabs.get(tabIds.get(position)).getTitle();
+			else return "";
 		}
 
 		@Override

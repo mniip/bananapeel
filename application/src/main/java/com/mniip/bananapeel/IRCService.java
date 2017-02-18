@@ -95,5 +95,3 @@ public class IRCService extends Service
 		}
 	}
 }
-// ServiceApplication.getService().tabs.get(tabId).putLine(edit.getText().toString());
-//id tab string

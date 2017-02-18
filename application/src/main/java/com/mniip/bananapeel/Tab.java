@@ -28,6 +28,9 @@ public class Tab
 	public void setTitle(String t)
 	{
 		title = t;
+		IRCInterfaceListener listener = service.getListener();
+		if(listener != null)
+			listener.onTabTitleChanged(id);
 	}
 
 	public ArrayList<String> getTextLines()

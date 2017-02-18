@@ -1,0 +1,147 @@
+package com.mniip.bananapeel;
+
+import java.util.ArrayList;
+
+public class IRCMessage
+{
+	static public class Source
+	{
+		public String text;
+
+		public Source(String txt)
+		{
+			text = txt;
+		}
+
+		public String getNick()
+		{
+			int excl = text.indexOf('!');
+			if(excl == -1)
+				return text;
+			return text.substring(0, excl);
+		}
+
+		public String getUser()
+		{
+			int excl = text.indexOf('!');
+			int at = text.indexOf('@');
+			if(excl == -1 || at == -1)
+				return null;
+			return text.substring(excl + 1, at);
+		}
+
+		public String getHost()
+		{
+			int at = text.indexOf('@');
+			if(at == -1)
+				return null;
+			return text.substring(at + 1);
+		}
+	}
+
+	public Source source;
+	public String command;
+	public String[] args;
+
+	public String getNick()
+	{
+		return source == null ? source.getNick() : null;
+	}
+
+	public String getUser()
+	{
+		return source == null ? source.getUser() : null;
+	}
+
+	public String getHost()
+	{
+		return source == null ? source.getHost() : null;
+	}
+
+	public IRCMessage(Source src, String cmd, String... arg)
+	{
+		source = src;
+		command = cmd;
+		args = arg;
+	}
+
+	public IRCMessage(String cmd, String... arg)
+	{
+		command = cmd;
+		args = arg;
+	}
+
+	public String toIRC()
+	{
+		StringBuilder b = new StringBuilder();
+
+		if(source != null)
+			b.append(':').append(source.text).append(' ');
+		b.append(command);
+
+		for(int i = 0; i < args.length; i++)
+			if(i == args.length - 1 && args[i].indexOf(' ') != -1)
+				b.append(" :").append(args[i]);
+			else
+				b.append(' ').append(args[i]);
+
+		return b.toString();
+	}
+
+	public static IRCMessage fromIRC(String str)
+	{
+		str = str.replace("\n", "").replace("\r", "");
+
+		Source src = null;
+		if(str.length() > 0 && str.charAt(0) == ':')
+		{
+			int idx = str.indexOf(' ');
+			if(idx == -1)
+			{
+				src = new Source(str.substring(1));
+				str = "";
+			}
+			else
+			{
+				src = new Source(str.substring(1, idx));
+				str = str.substring(idx + 1);
+			}
+		}
+
+		int idx = str.indexOf(' ');
+		String cmd;
+		if(idx == -1)
+		{
+			cmd = str;
+			str = "";
+		}
+		else
+		{
+			cmd = str.substring(0, idx);
+			str = str.substring(idx + 1);
+		}
+
+		ArrayList<String> args = new ArrayList<>();
+		while(str.length() != 0)
+		{
+			if(str.length() > 0 && str.charAt(0) == ':')
+			{
+				args.add(str.substring(1));
+				break;
+			}
+			idx = str.indexOf(' ');
+			if(idx == -1)
+			{
+				args.add(str);
+				str = "";
+			}
+			else
+			{
+				args.add(str.substring(0, idx));
+				str = str.substring(idx + 1);
+			}
+		}
+
+		return new IRCMessage(src, cmd, args.toArray(new String[args.size()]));
+	}
+}

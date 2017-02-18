@@ -6,38 +6,74 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.support.v7.widget.RecyclerView;
 
 public class TabFragment extends Fragment
 {
-    private int position;
+    private int tabId = -1;
+    TextLineAdapter adapter;
 
-    public void setPosition(int pos)
+    public void setId(int id)
     {
-        position = pos;
+        tabId = id;
     }
 
     @Override
     public void onSaveInstanceState(Bundle out)
     {
         super.onSaveInstanceState(out);
-        out.putInt("position", position);
+        out.putInt("tabId", tabId);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState)
     {
-        View view = inflater.inflate(R.layout.tab_fragment, parent, false);
         if(savedInstanceState != null)
-            position = savedInstanceState.getInt("position");
+            tabId = savedInstanceState.getInt("tabId");
+        ((MainScreen) getActivity()).getTabAdapter().onTabViewCreated(this, tabId);
 
-        RecyclerView recycler = (RecyclerView)view.findViewById(R.id.recycler);
+        View view = inflater.inflate(R.layout.tab_fragment, parent, false);
+
+        RecyclerView recycler = (RecyclerView) view.findViewById(R.id.recycler);
         recycler.setLayoutManager(new LinearLayoutManager(getContext()));
-        recycler.setAdapter(new TextLineAdapter(position));
-        if(savedInstanceState == null)
-            recycler.scrollToPosition(recycler.getAdapter().getItemCount() - 1);
+        adapter = new TextLineAdapter(tabId);
+        recycler.setAdapter(adapter);
+
+        ImageButton edit = (ImageButton) view.findViewById(R.id.send_button);
+        edit.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                EditText edit = (EditText) ((ViewGroup) v.getParent()).findViewById(R.id.input_box);
+                ServiceApplication.getService().tabs.get(tabId).putLine(edit.getText().toString());
+                edit.setText("");
+            }
+        });
+
+        if(tabId == -1)
+            ((MainScreen) getActivity()).getTabAdapter().notifyDataSetChanged();
+
         return view;
     }
 
+    @Override
+    public void onDestroyView()
+    {
+        ((MainScreen) getActivity()).getTabAdapter().onTabViewDestroyed(tabId);
+
+        super.onDestroyView();
+    }
+
+    public void onLinesAdded()
+    {
+        adapter.onLinesAdded();
+    }
+
+    public void onCleared()
+    {
+        adapter.onCleared();
+    }
 }

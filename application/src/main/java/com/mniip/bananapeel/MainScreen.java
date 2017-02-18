@@ -11,36 +11,167 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
+import android.util.SparseArray;
+
+import java.util.ArrayList;
 
 public class MainScreen extends FragmentActivity
 {
+	private TabAdapter tabAdapter;
+
+	public TabAdapter getTabAdapter()
+	{
+		return tabAdapter;
+	}
+
+	private final IRCInterfaceListener ircInterfaceListener = new IRCInterfaceListener()
+	{
+		@Override
+		public void onTabLinesAdded(int tabId)
+		{
+			getTabAdapter().onTabLinesAdded(tabId);
+		}
+
+		@Override
+		public void onTabCleared(int tabId)
+		{
+			getTabAdapter().onTabCleared(tabId);
+		}
+
+		@Override
+		public void onTabAdded(int tabId)
+		{
+			getTabAdapter().onTabAdded(tabId);
+		}
+
+		@Override
+		public void onTabRemoved(int tabId)
+		{
+			getTabAdapter().onTabRemoved(tabId);
+		}
+
+		@Override
+		public void onTabTitleChanged(int tabId)
+		{
+			getTabAdapter().onTabTitleChanged(tabId);
+		}
+
+		@Override
+		public void onTabNicklistChanged(int tabId)
+		{
+
+		}
+	};
+
+	private IRCService getService()
+	{
+		return ServiceApplication.getService();
+	}
+
 	private final ServiceConnection conn = new ServiceConnection()
 	{
 		@Override
-		public void onServiceConnected(ComponentName cls, IBinder binder) {}
+		public void onServiceConnected(ComponentName cls, IBinder binder)
+		{
+			getService().setListener(ircInterfaceListener);
+			tabAdapter.setService(getService());
+		}
+
 		@Override
-		public void onServiceDisconnected(ComponentName cls) {}
+		public void onServiceDisconnected(ComponentName cls)
+		{
+			getService().unsetListener(ircInterfaceListener);
+		}
 	};
 
-	private class TabAdapter extends FragmentStatePagerAdapter
+	public class TabAdapter extends FragmentStatePagerAdapter
 	{
+		private IRCService service;
+		private SparseArray<Integer> tabPositions = new SparseArray<>();
+		private ArrayList<Integer> tabIds = new ArrayList<>();
+		private SparseArray<TabFragment> tabFragments = new SparseArray<>();
+
 		public TabAdapter(FragmentManager manager)
 		{
 			super(manager);
+		}
+
+		public void setService(IRCService s)
+		{
+			service = s;
+			tabPositions.clear();
+			tabIds.clear();
+
+			for(int i = 0; i < service.tabs.size(); i++)
+			{
+				tabPositions.put(service.tabs.keyAt(i), i);
+				tabIds.add(i, service.tabs.keyAt(i));
+			}
+			notifyDataSetChanged();
+		}
+
+		public void onTabViewCreated(TabFragment view, int tabNumber)
+		{
+			tabFragments.put(tabNumber, view);
+		}
+
+		public void onTabViewDestroyed(int tabNumber)
+		{
+			tabFragments.delete(tabNumber);
+		}
+
+		public void onTabLinesAdded(int tabId)
+		{
+			TabFragment fragment = tabFragments.get(tabId);
+			if(fragment != null)
+				fragment.onLinesAdded();
+		}
+
+		public void onTabCleared(int tabId)
+		{
+			TabFragment fragment = tabFragments.get(tabId);
+			if(fragment != null)
+				fragment.onCleared();
+		}
+
+		public void onTabAdded(int tabId)
+		{
+			int pos = tabIds.size();
+			tabIds.add(tabId);
+			tabPositions.put(tabId, pos);
+			notifyDataSetChanged();
+		}
+
+		public void onTabRemoved(int tabId)
+		{
+			tabIds.remove(tabPositions.get(tabId));
+			tabPositions.delete(tabId);
+			notifyDataSetChanged();
+		}
+
+		public void onTabTitleChanged(int tabId)
+		{
+			notifyDataSetChanged();
 		}
 
 		@Override
 		public Fragment getItem(int position)
 		{
 			TabFragment fragment = new TabFragment();
-			fragment.setPosition(position);
+			fragment.setId(tabIds.get(position));
 			return fragment;
+		}
+
+		@Override
+		public String getPageTitle(int position)
+		{
+			return service.tabs.get(tabIds.get(position)).getTitle();
 		}
 
 		@Override
 		public int getCount()
 		{
-			return 100;
+			return tabIds.size();
 		}
 	}
 
@@ -50,14 +181,15 @@ public class MainScreen extends FragmentActivity
 		Log.d("BananaPeel", "MainActivity created");
         super.onCreate(savedInstanceState);
 
-		((ServiceApplication)getApplicationContext()).ensureServiceStarted();
+		((ServiceApplication)getApplication()).ensureServiceStarted();
 		Intent i = new Intent(this, IRCService.class);
 		bindService(i, conn, BIND_IMPORTANT);
 
         setContentView(R.layout.main_screen);
 
 		ViewPager pager = (ViewPager)findViewById(R.id.view_pager);
-		pager.setAdapter(new TabAdapter(getSupportFragmentManager()));
+		tabAdapter = new TabAdapter(getSupportFragmentManager());
+		pager.setAdapter(tabAdapter);
     }
 
 	@Override

@@ -22,6 +22,7 @@ RES_APK_FILE := $(patsubst %.apk,%-res.apk,$(TARGET))
 R_JAVA_DIR := gen/
 R_JAVA_FILE := $(R_JAVA_DIR)/$(PACKAGE_PATH)/R.java
 
+CLASS_PATH := $(ANDROID_FRAMEWORK):$(SDK_PATH)/extras/android/m2repository/com/android/support/support-v4/19.1.0/support-v4-19.1.0.jar
 JAVAC_FLAGS := -target 1.7 -source 1.7 $(MY_JAVAC_FLAGS)
 
 BIN_DIR := bin/
@@ -29,6 +30,7 @@ SRC_DIR := src/
 SOURCES := $(wildcard $(SRC_DIR)/*.java) $(wildcard $(SRC_DIR)/*/*.java) $(wildcard $(SRC_DIR)/*/*/*.java) $(wildcard $(SRC_DIR)/*/*/*/*.java)
 CLASSES := $(patsubst $(SRC_DIR)/%.java,$(BIN_DIR)/%.class,$(SOURCES)) $(patsubst $(R_JAVA_DIR)/%.java,$(BIN_DIR)/%.class,$(R_JAVA_FILE))
 
+LIBS := $(SDK_PATH)/extras/android/m2repository/com/android/support/support-v4/19.1.0/support-v4-19.1.0.jar
 DEX_FILE := $(patsubst %.apk,%.dex,$(TARGET))
 
 UNSIGNED_TARGET := $(patsubst %.apk,%.unsigned.apk,$(TARGET))
@@ -49,10 +51,10 @@ $(R_JAVA_FILE) $(RES_APK_FILE): $(R_JAVA_FILE)_
 
 $(CLASSES): $(SOURCES) $(R_JAVA_FILE)
 	mkdir -p $(BIN_DIR)
-	$(JAVAC) $(JAVAC_FLAGS) -cp $(ANDROID_FRAMEWORK) -d $(BIN_DIR) $+
+	$(JAVAC) -cp $(CLASS_PATH) $(JAVAC_FLAGS) -d $(BIN_DIR) $+
 
 $(DEX_FILE): $(CLASSES)
-	$(DEX) --dex --output $@ $(BIN_DIR)
+	$(DEX) --dex --output $@ $(BIN_DIR) $(LIBS)
 
 $(UNSIGNED_TARGET): $(RES_APK_FILE) $(DEX_FILE)
 	$(APK_BUILDER) $@ -u -z $(RES_APK_FILE) -f $(DEX_FILE)
@@ -68,7 +70,7 @@ install:
 	$(ADB) install -r $(TARGET)
 
 run:
-	$(ADB) shell am start $(PACKAGE)/.MainActivity
+	$(ADB) shell am start $(PACKAGE)/.MainScreen
 
 clean:
 	rm -f $(R_JAVA_FILE) $(R_JAVA_FILE)_ $(RES_APK_FILE) $(DEX_FILE) $(UNSIGNED_TARGET) $(TARGET)

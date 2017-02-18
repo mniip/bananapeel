@@ -1,12 +1,14 @@
 package com.mniip.bananapeel;
 
 import android.app.Application;
+import android.content.Context;
 import android.content.Intent;
+import android.os.UserManager;
 import android.util.Log;
 
 public class ServiceApplication extends Application
 {
-	IRCService service;
+	private static IRCService service;
 
 	public void onServiceStarted(IRCService s)
 	{
@@ -16,6 +18,11 @@ public class ServiceApplication extends Application
 	public void onServiceStopped()
 	{
 		service = null;
+	}
+
+	public static IRCService getService()
+	{
+		return service;
 	}
 
 	public void ensureServiceStarted()

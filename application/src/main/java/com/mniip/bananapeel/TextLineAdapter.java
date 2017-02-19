@@ -16,9 +16,9 @@ class TextLineAdapter extends RecyclerView.Adapter<TextLineAdapter.ViewHolder>
     public TextLineAdapter(int id)
     {
         super();
-        tabId = id;
-        textLines = ServiceApplication.getService().tabs.get(id).getTextLines();
-    }
+    tabId = id;
+    textLines = ServiceApplication.getService().tabs.get(id).getTextLines();
+}
 
     @Override
     public TextLineAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType)

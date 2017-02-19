@@ -24,9 +24,11 @@ public class IRCMessage
 		public String getUser()
 		{
 			int excl = text.indexOf('!');
-			int at = text.indexOf('@');
-			if(excl == -1 || at == -1)
+			if(excl == -1)
 				return null;
+			int at = text.indexOf('@');
+			if(at == -1)
+				return text.substring(excl);
 			return text.substring(excl + 1, at);
 		}
 

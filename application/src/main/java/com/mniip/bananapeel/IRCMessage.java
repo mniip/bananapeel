@@ -44,6 +44,7 @@ public class IRCMessage
 	public Source source;
 	public String command;
 	public String[] args;
+	public String rawString;
 
 	public String getNick()
 	{
@@ -58,6 +59,10 @@ public class IRCMessage
 	public String getHost()
 	{
 		return source == null ? source.getHost() : null;
+	}
+
+	public IRCMessage()
+	{
 	}
 
 	public IRCMessage(Source src, String cmd, String... arg)
@@ -75,6 +80,9 @@ public class IRCMessage
 
 	public String toIRC()
 	{
+		if(rawString != null)
+			return rawString;
+
 		StringBuilder b = new StringBuilder();
 
 		if(source != null)
@@ -90,9 +98,10 @@ public class IRCMessage
 		return b.toString();
 	}
 
-	public static IRCMessage fromIRC(String str)
+	public static IRCMessage fromIRC(String origStr)
 	{
-		str = str.replace("\n", "").replace("\r", "");
+		origStr = origStr.replace("\n", "").replace("\r", "");
+		String str = origStr;
 
 		Source src = null;
 		if(str.length() > 0 && str.charAt(0) == ':')
@@ -144,6 +153,11 @@ public class IRCMessage
 			}
 		}
 
-		return new IRCMessage(src, cmd, args.toArray(new String[args.size()]));
+		IRCMessage msg = new IRCMessage();
+		msg.source = src;
+		msg.command = cmd;
+		msg.args = args.toArray(new String[args.size()]);
+		msg.rawString = origStr;
+		return msg;
 	}
 }

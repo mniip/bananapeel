@@ -14,6 +14,7 @@ import android.util.Log;
 import android.util.SparseArray;
 
 import java.io.FileDescriptor;
+import java.util.ArrayList;
 
 public class IRCService extends Service
 {
@@ -40,8 +41,6 @@ public class IRCService extends Service
 	{
 		Tab tab = createTab();
 		tab.setTitle("title");
-		Tab tab2 = createTab();
-		tab2.setTitle("title2");
 
 		Log.d("BananaPeel", "Service created");
 		super.onCreate();
@@ -86,12 +85,55 @@ public class IRCService extends Service
 		tabs.delete(tabId);
 	}
 
-	public void onCommandEntered(int tabId, String str)
+	public void onTextEntered(int tabId, String str)
 	{
 		Tab t = tabs.get(tabId);
 		if (t != null)
 		{
-			t.putLine(str);
+			if(str.length() > 0 && str.charAt(0) == '/')
+			{
+				onCommand(t, str.substring(1));
+			}
+			else
+			{
+				t.putLine(str);
+			}
+		}
+	}
+
+	public void onCommand(Tab tab, String str)
+	{
+		ArrayList<String> words = new ArrayList<>();
+		ArrayList<String> wordEols = new ArrayList<>();
+		int idx;
+		do
+		{
+			wordEols.add(str);
+			idx = str.indexOf(' ');
+			if(idx != -1)
+			{
+				words.add(str.substring(0, idx));
+				str = str.substring(idx + 1);
+			}
+			else
+			{
+				words.add(str.substring(0));
+			}
+		}
+		while(idx != -1);
+
+		if(words.size() > 0)
+		{
+			if(words.get(0).toLowerCase().equals("server"))
+			{
+				tab.server = new Server(this);
+				tab.server.connect(words.get(1), 6667);
+			}
+			if(words.get(0).toLowerCase().equals("quote"))
+			{
+				if(tab.server != null)
+					tab.server.send(IRCMessage.fromIRC(wordEols.get(1)));
+			}
 		}
 	}
 }

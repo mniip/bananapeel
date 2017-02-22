@@ -1,5 +1,6 @@
 package com.mniip.bananapeel;
 
+import android.app.Service;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -16,14 +17,14 @@ class TextLineAdapter extends RecyclerView.Adapter<TextLineAdapter.ViewHolder>
     public TextLineAdapter(int id)
     {
         super();
-    tabId = id;
-    textLines = ServiceApplication.getService().tabs.get(id).getTextLines();
-}
+        tabId = id;
+        textLines = ServiceApplication.getService().tabs.get(id).getTextLines();
+    }
 
     @Override
     public TextLineAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType)
     {
-        TextView view = (TextView) LayoutInflater.from(parent.getContext()).inflate(R.layout.text_line_fragment, parent, false);
+        TextView view = (TextView)LayoutInflater.from(parent.getContext()).inflate(R.layout.text_line_fragment, parent, false);
         ViewHolder holder = new TextLineAdapter.ViewHolder(view);
         return holder;
     }

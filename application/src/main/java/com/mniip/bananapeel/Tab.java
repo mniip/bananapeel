@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 public class Tab
 {
+	public Server server;
 	private IRCService service;
 	private int id;
 	private String title = "";

@@ -32,7 +32,7 @@ public class TabFragment extends Fragment
     {
         if(savedInstanceState != null)
             tabId = savedInstanceState.getInt("tabId");
-        ((MainScreen) getActivity()).getTabAdapter().onTabViewCreated(this, tabId);
+        ((MainScreen)getActivity()).getTabAdapter().onTabViewCreated(this, tabId);
 
         View view = inflater.inflate(R.layout.tab_fragment, parent, false);
 
@@ -40,6 +40,7 @@ public class TabFragment extends Fragment
         recycler.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new TextLineAdapter(tabId);
         recycler.setAdapter(adapter);
+        adapter.notifyDataSetChanged();
 
         ImageButton edit = (ImageButton) view.findViewById(R.id.send_button);
         edit.setOnClickListener(new View.OnClickListener()
@@ -47,14 +48,14 @@ public class TabFragment extends Fragment
             @Override
             public void onClick(View v)
             {
-                EditText edit = (EditText) ((ViewGroup) v.getParent()).findViewById(R.id.input_box);
-                ServiceApplication.getService().onCommandEntered(tabId, edit.getText().toString());
+                EditText edit = (EditText)((ViewGroup) v.getParent()).findViewById(R.id.input_box);
+                ServiceApplication.getService().onTextEntered(tabId, edit.getText().toString());
                 edit.setText("");
             }
         });
 
         if(tabId == -1)
-            ((MainScreen) getActivity()).getTabAdapter().notifyDataSetChanged();
+            ((MainScreen)getActivity()).getTabAdapter().notifyDataSetChanged();
 
         return view;
     }
@@ -62,7 +63,7 @@ public class TabFragment extends Fragment
     @Override
     public void onDestroyView()
     {
-        ((MainScreen) getActivity()).getTabAdapter().onTabViewDestroyed(tabId);
+        ((MainScreen)getActivity()).getTabAdapter().onTabViewDestroyed(tabId);
 
         super.onDestroyView();
     }

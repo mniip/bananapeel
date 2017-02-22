@@ -13,7 +13,10 @@ import android.support.v7.widget.RecyclerView;
 public class TabFragment extends Fragment
 {
     private int tabId = -1;
-    TextLineAdapter adapter;
+    private boolean sticky = true;
+    private TextLineAdapter adapter;
+    private RecyclerView recycler;
+
 
     public void setId(int id)
     {
@@ -31,16 +34,30 @@ public class TabFragment extends Fragment
     public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState)
     {
         if(savedInstanceState != null)
+        {
             tabId = savedInstanceState.getInt("tabId");
+            sticky = savedInstanceState.getBoolean("sticky");
+        }
         ((MainScreen)getActivity()).getTabAdapter().onTabViewCreated(this, tabId);
 
         View view = inflater.inflate(R.layout.tab_fragment, parent, false);
 
-        RecyclerView recycler = (RecyclerView) view.findViewById(R.id.recycler);
-        recycler.setLayoutManager(new LinearLayoutManager(getContext()));
+        recycler = (RecyclerView)view.findViewById(R.id.recycler);
+        LinearLayoutManager manager = new LinearLayoutManager(getContext());
+        manager.setStackFromEnd(true);
+        recycler.setLayoutManager(manager);
         adapter = new TextLineAdapter(tabId);
         recycler.setAdapter(adapter);
         adapter.notifyDataSetChanged();
+        recycler.setOnScrollListener(new RecyclerView.OnScrollListener()
+        {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy)
+            {
+                LinearLayoutManager manager = (LinearLayoutManager)recyclerView.getLayoutManager();
+                sticky = manager.findLastCompletelyVisibleItemPosition() == manager.getItemCount() - 1;
+            }
+        });
 
         ImageButton edit = (ImageButton) view.findViewById(R.id.send_button);
         edit.setOnClickListener(new View.OnClickListener()
@@ -71,6 +88,8 @@ public class TabFragment extends Fragment
     public void onLinesAdded()
     {
         adapter.onLinesAdded();
+        if(sticky)
+            recycler.scrollToPosition(adapter.getItemCount() - 1);
     }
 
     public void onCleared()

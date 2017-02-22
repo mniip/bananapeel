@@ -1,6 +1,5 @@
 package com.mniip.bananapeel;
 
-import android.app.Service;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -38,6 +37,7 @@ class TextLineAdapter extends RecyclerView.Adapter<TextLineAdapter.ViewHolder>
     @Override
     public int getItemCount()
     {
+        lastSize = textLines.size();
         return textLines.size();
     }
 

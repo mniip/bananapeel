@@ -19,6 +19,7 @@ import java.util.ArrayList;
 public class IRCService extends Service
 {
 	private IRCInterfaceListener listener;
+	public IRCPreferences preferences;
 
 	public void setListener(IRCInterfaceListener l)
 	{
@@ -39,6 +40,8 @@ public class IRCService extends Service
 	@Override
 	public void onCreate()
 	{
+		preferences = new IRCPreferences(this);
+
 		Tab tab = createTab();
 		tab.setTitle("title");
 
@@ -47,7 +50,7 @@ public class IRCService extends Service
 
 		Notification n = new NotificationCompat.Builder(this)
 			.setSmallIcon(R.drawable.app_icon)
-			.setContentTitle("Notification")
+			.setContentTitle(getString(R.string.app_name))
 			.setContentIntent(PendingIntent.getActivity(this, 0, (new Intent(this, MainScreen.class)).setFlags(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT), 0))
 			.build();
 		startForeground(1, n);

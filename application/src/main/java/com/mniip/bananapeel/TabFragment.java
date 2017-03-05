@@ -3,12 +3,15 @@ package com.mniip.bananapeel;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.support.v7.widget.RecyclerView;
+import android.widget.TextView;
 
 public class TabFragment extends Fragment
 {
@@ -59,15 +62,30 @@ public class TabFragment extends Fragment
             }
         });
 
-        ImageButton edit = (ImageButton) view.findViewById(R.id.send_button);
-        edit.setOnClickListener(new View.OnClickListener()
+        EditText text = (EditText)view.findViewById(R.id.input_box);
+        text.setOnEditorActionListener(new TextView.OnEditorActionListener()
+        {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event)
+            {
+                if(actionId == EditorInfo.IME_ACTION_SEND)
+                {
+                    sendInput(v);
+                    return true;
+                }
+                else
+                    return false;
+            }
+        });
+
+        ImageButton button = (ImageButton)view.findViewById(R.id.send_button);
+        button.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View v)
             {
-                EditText edit = (EditText)((ViewGroup) v.getParent()).findViewById(R.id.input_box);
-                ServiceApplication.getService().onTextEntered(tabId, edit.getText().toString());
-                edit.setText("");
+                EditText edit = (EditText)((ViewGroup)v.getParent()).findViewById(R.id.input_box);
+                sendInput(edit);
             }
         });
 
@@ -75,6 +93,12 @@ public class TabFragment extends Fragment
             ((MainScreen)getActivity()).getTabAdapter().notifyDataSetChanged();
 
         return view;
+    }
+
+    private void sendInput(TextView v)
+    {
+        ServiceApplication.getService().onTextEntered(tabId, v.getText().toString());
+        v.setText("");
     }
 
     @Override

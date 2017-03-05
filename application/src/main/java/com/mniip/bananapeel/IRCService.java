@@ -84,23 +84,34 @@ public class IRCService extends Service
 		tabs.delete(tabId);
 	}
 
+	public Tab findTab(Server srv, String title)
+	{
+		for(int i = 0; i < tabs.size(); i++)
+		{
+			Tab tab = tabs.valueAt(i);
+			if(tab.getServer() == srv && tab.getTitle().equals(title))
+				return tab;
+		}
+		return null;
+	}
+
 	public void onTextEntered(int tabId, String str)
 	{
 		Tab t = tabs.get(tabId);
 		if (t != null)
 		{
 			if(str.length() > 0 && str.charAt(0) == '/')
-			{
-				onCommand(t, str.substring(1));
-			}
+				onCommandEntered(t, str.substring(1));
 			else
-			{
-				t.putLine(str);
-			}
+				if(t.getServer() != null)
+				{
+					t.getServer().send(new IRCMessage("PRIVMSG", t.getTitle(), str));
+					t.putLine("<" + t.getServer().ourNick + "> " + str);
+				}
 		}
 	}
 
-	public void onCommand(Tab tab, String str)
+	public void onCommandEntered(Tab tab, String str)
 	{
 		ArrayList<String> words = new ArrayList<>();
 		ArrayList<String> wordEols = new ArrayList<>();
@@ -116,12 +127,24 @@ public class IRCService extends Service
 			}
 			else
 			{
-				words.add(str.substring(0));
+				words.add(str);
 			}
 		}
 		while(idx != -1);
 
 		if(words.size() > 0)
 			ClientCommandHandler.handle(tab, words.get(0).toUpperCase(), words, wordEols);
+	}
+
+	public void onServerConnected(Server srv)
+	{
+		srv.ourNick = preferences.getDefaultNick();
+		srv.send(new IRCMessage("NICK", srv.ourNick));
+		srv.send(new IRCMessage("USER", preferences.getDefaultUser(), "*", "*", preferences.getDefaultRealName()));
+	}
+
+	public void onIRCMessageReceived(Server srv, IRCMessage msg)
+	{
+		IRCCommandHandler.handle(srv, msg);
 	}
 }

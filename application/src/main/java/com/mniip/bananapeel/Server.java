@@ -17,6 +17,8 @@ public class Server
 	private SenderThread sender;
 	private AtomicBoolean hadError;
 
+	public String ourNick;
+
 	public Server(IRCService srv, Tab tab)
 	{
 		service = srv;
@@ -46,7 +48,7 @@ public class Server
 	{
 		receiver = new ReceiverThread(this, socket, hadError);
 		receiver.start();
-		Log.d("BananaPeel", "Connected");
+		service.onServerConnected(this);
 	}
 
 	public void onMessageReceived(final IRCMessage msg)
@@ -56,12 +58,7 @@ public class Server
 			@Override
 			public void run()
 			{
-				for(int i = 0; i < service.tabs.size(); i++)
-				{
-					Tab tab = service.tabs.valueAt(i);
-					if(tab.getServer() == Server.this)
-						tab.putLine(msg.toIRC());
-				}
+				service.onIRCMessageReceived(Server.this, msg);
 			}
 		});
 	}

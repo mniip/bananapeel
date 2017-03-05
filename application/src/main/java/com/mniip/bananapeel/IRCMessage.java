@@ -48,17 +48,17 @@ public class IRCMessage
 
 	public String getNick()
 	{
-		return source == null ? source.getNick() : null;
+		return source == null ? null : source.getNick();
 	}
 
 	public String getUser()
 	{
-		return source == null ? source.getUser() : null;
+		return source == null ? null : source.getUser();
 	}
 
 	public String getHost()
 	{
-		return source == null ? source.getHost() : null;
+		return source == null ? null : source.getHost();
 	}
 
 	public IRCMessage()

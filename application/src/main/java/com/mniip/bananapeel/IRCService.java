@@ -38,8 +38,7 @@ public class IRCService extends Service
 	{
 		preferences = new IRCPreferences(this);
 
-		Tab tab = createTab();
-		tab.setTitle("title");
+		createServerTab();
 
 		Log.d("BananaPeel", "Service created");
 		super.onCreate();
@@ -68,9 +67,18 @@ public class IRCService extends Service
 	SparseArray<Tab> tabs = new SparseArray<>();
 	private int unusedTabId = 0;
 
-	public Tab createTab()
+	public Tab createServerTab()
 	{
-		Tab t = new Tab(this, unusedTabId++);
+		Tab t = new ServerTab(this, unusedTabId++);
+		tabs.put(t.getId(), t);
+		if(listener != null)
+			listener.onTabAdded(t.getId());
+		return t;
+	}
+
+	public Tab createTab(ServerTab parent, String title)
+	{
+		Tab t = new Tab(this, parent, unusedTabId++, title);
 		tabs.put(t.getId(), t);
 		if(listener != null)
 			listener.onTabAdded(t.getId());
@@ -84,12 +92,12 @@ public class IRCService extends Service
 		tabs.delete(tabId);
 	}
 
-	public Tab findTab(Server srv, String title)
+	public Tab findTab(ServerTab sTab, String title)
 	{
 		for(int i = 0; i < tabs.size(); i++)
 		{
 			Tab tab = tabs.valueAt(i);
-			if(tab.getServer() == srv && tab.getTitle().equals(title))
+			if(tab.getServerTab() == sTab && tab.getTitle().equals(title))
 				return tab;
 		}
 		return null;
@@ -103,10 +111,10 @@ public class IRCService extends Service
 			if(str.length() > 0 && str.charAt(0) == '/')
 				onCommandEntered(t, str.substring(1));
 			else
-				if(t.getServer() != null)
+				if(t.getServerTab().server != null)
 				{
-					t.getServer().send(new IRCMessage("PRIVMSG", t.getTitle(), str));
-					t.putLine("<" + t.getServer().ourNick + "> " + str);
+					t.getServerTab().server.send(new IRCMessage("PRIVMSG", t.getTitle(), str));
+					t.putLine("<" + t.getServerTab().server.ourNick + "> " + str);
 				}
 		}
 	}

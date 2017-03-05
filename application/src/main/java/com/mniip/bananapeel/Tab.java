@@ -4,16 +4,18 @@ import java.util.ArrayList;
 
 public class Tab
 {
-	private Server server;
+	protected ServerTab serverTab;
 	private IRCService service;
 	private int id;
-	private String title = "";
+	private String title;
 	private ArrayList<String> textLines = new ArrayList<>();
 
-	public Tab(IRCService s, int tabId)
+	public Tab(IRCService s, ServerTab sTab, int tabId, String ttl)
 	{
 		service = s;
+		serverTab = sTab;
 		id = tabId;
+		title = ttl;
 	}
 
 	public int getId()
@@ -39,14 +41,9 @@ public class Tab
 		return service;
 	}
 
-	public Server getServer()
+	public ServerTab getServerTab()
 	{
-		return server;
-	}
-
-	public void setServer(Server srv)
-	{
-		server = srv;
+		return serverTab;
 	}
 
 	public ArrayList<String> getTextLines()

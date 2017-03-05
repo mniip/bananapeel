@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class Server
 {
 	private IRCService service;
-	private Tab serverTab;
+	private ServerTab serverTab;
 	private Socket socket;
 	private ReceiverThread receiver;
 	private SenderThread sender;
@@ -19,10 +19,10 @@ public class Server
 
 	public String ourNick;
 
-	public Server(IRCService srv, Tab tab)
+	public Server(IRCService srv, ServerTab sTab)
 	{
 		service = srv;
-		serverTab = tab;
+		serverTab = sTab;
 	}
 
 	public IRCService getService()
@@ -30,7 +30,7 @@ public class Server
 		return service;
 	}
 
-	public Tab getTab()
+	public ServerTab getTab()
 	{
 		return serverTab;
 	}

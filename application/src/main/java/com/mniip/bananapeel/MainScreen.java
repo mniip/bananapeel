@@ -136,10 +136,25 @@ public class MainScreen extends FragmentActivity
 
 		public void onTabAdded(int tabId)
 		{
-			int pos = tabIds.size();
-			tabIds.add(tabId);
-			tabPositions.put(tabId, pos);
-			notifyDataSetChanged();
+			Tab tab = service.tabs.get(tabId);
+			if(tab != null)
+			{
+				int pos = 0;
+				for(int p = 0; p < tabIds.size(); p++)
+				{
+					Tab t = service.tabs.get(tabIds.get(p));
+					if(tab.getServerTab() == t)
+						pos = p + 1;
+					if(t != null && t.getTitle().compareToIgnoreCase(tab.getTitle()) < 0)
+						pos = p + 1;
+				}
+				tabIds.add(pos, tabId);
+				for(int i = 0; i < tabPositions.size(); i++)
+					if(tabPositions.valueAt(i) >= pos)
+						tabPositions.setValueAt(i, tabPositions.valueAt(i) + 1);
+				tabPositions.put(tabId, pos);
+				notifyDataSetChanged();
+			}
 		}
 
 		public void onTabRemoved(int tabId)
@@ -149,6 +164,9 @@ public class MainScreen extends FragmentActivity
 			{
 				tabIds.remove(tabPos);
 				tabPositions.delete(tabId);
+				for(int i = 0; i < tabPositions.size(); i++)
+					if(tabPositions.valueAt(i) > tabPos)
+						tabPositions.setValueAt(i, tabPositions.valueAt(i) - 1);
 				notifyDataSetChanged();
 			}
 		}

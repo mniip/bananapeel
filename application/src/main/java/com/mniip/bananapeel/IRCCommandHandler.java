@@ -12,7 +12,7 @@ public class IRCCommandHandler
 
 	public static void handle(Server srv, IRCMessage msg)
 	{
-		String methodName = "handle" + msg.command;
+		String methodName = "handle" + msg.command.toUpperCase();
 		Method m;
 		try
 		{
@@ -41,13 +41,9 @@ public class IRCCommandHandler
 			String channel = msg.args[0];
 			Tab tab;
 			if(nick.equals(srv.ourNick))
-			{
-				tab = srv.getService().createTab();
-				tab.setServer(srv);
-				tab.setTitle(channel);
-			}
+				tab = srv.getService().createTab(srv.getTab(), channel);
 			else
-				tab = srv.getService().findTab(srv, channel);
+				tab = srv.getService().findTab(srv.getTab(), channel);
 			if(tab != null)
 				tab.putLine("* " + nick + " joined " + channel);
 
@@ -63,13 +59,9 @@ public class IRCCommandHandler
 			String target = msg.args[0];
 			String text = msg.args[1];
 			String location = target.equals(srv.ourNick) ? nick : target;
-			Tab tab = srv.getService().findTab(srv, location);
+			Tab tab = srv.getService().findTab(srv.getTab(), location);
 			if(tab == null)
-			{
-				tab = srv.getService().createTab();
-				tab.setServer(srv);
-				tab.setTitle(nick); /* TODO */
-			}
+				tab = srv.getService().createTab(srv.getTab(), nick);
 			tab.putLine("<" + nick + "> " + text);
 		}
 	}

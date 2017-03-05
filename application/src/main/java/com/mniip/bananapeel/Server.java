@@ -49,31 +49,21 @@ public class Server
 		Log.d("BananaPeel", "Connected");
 	}
 
-	public void onMessageReceived(IRCMessage msg)
+	public void onMessageReceived(final IRCMessage msg)
 	{
 		new Handler(Looper.getMainLooper()).post(new Runnable()
 		{
-			private Server server;
-			private IRCMessage message;
-
 			@Override
 			public void run()
 			{
 				for(int i = 0; i < service.tabs.size(); i++)
 				{
 					Tab tab = service.tabs.valueAt(i);
-					if(tab.getServer() == server)
-						tab.putLine(message.toIRC());
+					if(tab.getServer() == Server.this)
+						tab.putLine(msg.toIRC());
 				}
 			}
-
-			public Runnable set(Server srv, IRCMessage msg)
-			{
-				server = srv;
-				message = msg;
-				return this;
-			}
-		}.set(this, msg));
+		});
 	}
 
 	public void onError(Exception e)

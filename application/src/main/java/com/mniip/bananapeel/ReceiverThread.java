@@ -25,9 +25,9 @@ public class ReceiverThread extends Thread
 		try
 		{
 			InputStream stream = socket.getInputStream();
+			ByteArrayOutputStream line = new ByteArrayOutputStream();
 			while(!Thread.interrupted())
 			{
-				ByteArrayOutputStream line = new ByteArrayOutputStream();
 				byte[] buffer = new byte[4096];
 				int len = stream.read(buffer, 0, buffer.length);
 				if(len == -1)

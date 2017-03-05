@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 public class Tab
 {
-	public Server server;
+	private Server server;
 	private IRCService service;
 	private int id;
 	private String title = "";
@@ -32,6 +32,21 @@ public class Tab
 		IRCInterfaceListener listener = service.getListener();
 		if(listener != null)
 			listener.onTabTitleChanged(id);
+	}
+
+	public IRCService getService()
+	{
+		return service;
+	}
+
+	public Server getServer()
+	{
+		return server;
+	}
+
+	public void setServer(Server srv)
+	{
+		server = srv;
 	}
 
 	public ArrayList<String> getTextLines()

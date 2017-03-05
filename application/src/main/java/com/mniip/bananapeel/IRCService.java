@@ -6,14 +6,10 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
-import android.os.IInterface;
-import android.os.Parcel;
-import android.os.RemoteException;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.util.SparseArray;
 
-import java.io.FileDescriptor;
 import java.util.ArrayList;
 
 public class IRCService extends Service
@@ -126,17 +122,6 @@ public class IRCService extends Service
 		while(idx != -1);
 
 		if(words.size() > 0)
-		{
-			if(words.get(0).toLowerCase().equals("server"))
-			{
-				tab.server = new Server(this);
-				tab.server.connect(words.get(1), 6667);
-			}
-			if(words.get(0).toLowerCase().equals("quote"))
-			{
-				if(tab.server != null)
-					tab.server.send(IRCMessage.fromIRC(wordEols.get(1)));
-			}
-		}
+			ClientCommandHandler.handle(tab, words.get(0).toUpperCase(), words, wordEols);
 	}
 }

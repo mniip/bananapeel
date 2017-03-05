@@ -11,14 +11,26 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class Server
 {
 	private IRCService service;
+	private Tab serverTab;
 	private Socket socket;
 	private ReceiverThread receiver;
 	private SenderThread sender;
 	private AtomicBoolean hadError;
 
-	public Server(IRCService srv)
+	public Server(IRCService srv, Tab tab)
 	{
 		service = srv;
+		serverTab = tab;
+	}
+
+	public IRCService getService()
+	{
+		return service;
+	}
+
+	public Tab getTab()
+	{
+		return serverTab;
 	}
 
 	public void connect(String hostname, int port)
@@ -50,7 +62,7 @@ public class Server
 				for(int i = 0; i < service.tabs.size(); i++)
 				{
 					Tab tab = service.tabs.valueAt(i);
-					if(tab.server == server)
+					if(tab.getServer() == server)
 						tab.putLine(message.toIRC());
 				}
 			}

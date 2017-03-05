@@ -1,9 +1,7 @@
 package com.mniip.bananapeel;
 
 import android.app.Application;
-import android.content.Context;
 import android.content.Intent;
-import android.os.UserManager;
 import android.util.Log;
 
 public class ServiceApplication extends Application

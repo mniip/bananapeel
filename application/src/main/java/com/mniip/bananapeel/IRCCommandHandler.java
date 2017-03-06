@@ -51,6 +51,12 @@ public class IRCCommandHandler
 	}
 
 	@IRCCommandHandler.Hook
+	private static void handlePING(Server srv, IRCMessage msg)
+	{
+		srv.send(new IRCMessage("PONG", msg.args));
+	}
+
+	@IRCCommandHandler.Hook
 	private static void handlePRIVMSG(Server srv, IRCMessage msg)
 	{
 		if(msg.args.length >= 2)

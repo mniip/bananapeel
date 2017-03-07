@@ -21,6 +21,7 @@ public class IRCService extends Service
 {
 	private IRCInterfaceListener listener;
 	public IRCPreferences preferences;
+	private Tab frontTab;
 
 	public void setListener(IRCInterfaceListener l)
 	{
@@ -45,6 +46,7 @@ public class IRCService extends Service
 
 		ServerTab tab = createServerTab();
 		tab.server = new IRCServer(this, tab);
+		frontTab = tab;
 
 		Log.d("BananaPeel", "Service created");
 		super.onCreate();
@@ -93,9 +95,12 @@ public class IRCService extends Service
 
 	public void deleteTab(int tabId)
 	{
-		if(listener != null)
-			listener.onTabRemoved(tabId);
-		tabs.delete(tabId);
+		if(tabs.get(tabId) != null)
+		{
+			if(listener != null)
+				listener.onTabRemoved(tabId);
+			tabs.delete(tabId);
+		}
 	}
 
 	public Tab findTab(ServerTab sTab, String title)
@@ -108,6 +113,25 @@ public class IRCService extends Service
 		}
 		return null;
 	}
+
+	public Tab getFrontTab()
+	{
+		return frontTab;
+	}
+
+	public void setFrontTab(int tabId)
+	{
+		Tab tab = tabs.get(tabId);
+		if(tab != null)
+			frontTab = tab;
+	}
+
+	public void changeNickList(Tab tab)
+	{
+		if(listener != null)
+			listener.onTabNickListChanged(tab.getId());
+	}
+
 
 	public void onTextEntered(int tabId, String str)
 	{

@@ -7,5 +7,5 @@ public interface IRCInterfaceListener
 	void onTabAdded(int tabId);
 	void onTabRemoved(int tabId);
 	void onTabTitleChanged(int tabId);
-	void onTabNicklistChanged(int tabId);
+	void onTabNickListChanged(int tabId);
 }

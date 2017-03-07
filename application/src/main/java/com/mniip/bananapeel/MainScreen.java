@@ -12,12 +12,20 @@ import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.util.SparseArray;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.ListAdapter;
+import android.widget.ListView;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 
 public class MainScreen extends FragmentActivity
 {
 	private TabAdapter tabAdapter;
+	private NickListAdapter nickListAdapter;
 
 	public TabAdapter getTabAdapter()
 	{
@@ -29,37 +37,37 @@ public class MainScreen extends FragmentActivity
 		@Override
 		public void onTabLinesAdded(int tabId)
 		{
-			getTabAdapter().onTabLinesAdded(tabId);
+			tabAdapter.onTabLinesAdded(tabId);
 		}
 
 		@Override
 		public void onTabCleared(int tabId)
 		{
-			getTabAdapter().onTabCleared(tabId);
+			tabAdapter.onTabCleared(tabId);
 		}
 
 		@Override
 		public void onTabAdded(int tabId)
 		{
-			getTabAdapter().onTabAdded(tabId);
+			tabAdapter.onTabAdded(tabId);
 		}
 
 		@Override
 		public void onTabRemoved(int tabId)
 		{
-			getTabAdapter().onTabRemoved(tabId);
+			tabAdapter.onTabRemoved(tabId);
 		}
 
 		@Override
 		public void onTabTitleChanged(int tabId)
 		{
-			getTabAdapter().onTabTitleChanged(tabId);
+			tabAdapter.onTabTitleChanged(tabId);
 		}
 
 		@Override
-		public void onTabNicklistChanged(int tabId)
+		public void onTabNickListChanged(int tabId)
 		{
-
+			nickListAdapter.onTabNickListChanged(tabId);
 		}
 	};
 
@@ -203,6 +211,44 @@ public class MainScreen extends FragmentActivity
 		}
 	}
 
+	public class NickListAdapter extends BaseAdapter
+	{
+		@Override
+		public int getCount()
+		{
+			IRCService service = getService();
+			if(service == null)
+				return 0;
+			return service.getFrontTab().nickList.size();
+		}
+
+		@Override
+		public Object getItem(int position)
+		{
+			return getService().getFrontTab().nickList.get(position);
+		}
+
+		@Override
+		public long getItemId(int position)
+		{
+			return getService().getFrontTab().nickList.get(position).hashCode();
+		}
+
+		@Override
+		public View getView(int position, View reuse, ViewGroup parent)
+		{
+			TextView view = (TextView)LayoutInflater.from(parent.getContext()).inflate(R.layout.nick_line, parent, false);
+			view.setText(getService().getFrontTab().nickList.get(position));
+			return view;
+		}
+
+		public void onTabNickListChanged(int tabId)
+		{
+			if(getService().getFrontTab().getId() == tabId)
+				notifyDataSetChanged();
+		}
+	}
+
 	@Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -215,9 +261,28 @@ public class MainScreen extends FragmentActivity
 
         setContentView(R.layout.main_screen);
 
+		ListView nickList = (ListView)findViewById(R.id.nick_list);
+		nickListAdapter = new NickListAdapter();
+		nickList.setAdapter(nickListAdapter);
+
 		ViewPager pager = (ViewPager)findViewById(R.id.view_pager);
 		tabAdapter = new TabAdapter(getSupportFragmentManager());
 		pager.setAdapter(tabAdapter);
+		pager.addOnPageChangeListener(new ViewPager.OnPageChangeListener()
+		{
+			@Override
+			public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) { }
+			@Override
+			public void onPageScrollStateChanged(int state)	{ }
+			@Override
+			public void onPageSelected(int position)
+			{
+				Integer id = tabAdapter.tabIds.get(position);
+				if(id != null)
+					getService().setFrontTab(id);
+				nickListAdapter.notifyDataSetChanged();
+			}
+		});
     }
 
 	@Override

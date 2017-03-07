@@ -5,8 +5,10 @@
     android:layout_height="match_parent"
     tools:context="com.mniip.bananapeel.MainScreen">
 
-    <android.support.v4.widget.DrawerLayout android:layout_height="match_parent"
-        android:layout_width="match_parent">
+    <android.support.v4.widget.DrawerLayout
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        android:background="@android:color/transparent">
 
         <LinearLayout
             android:orientation="vertical"
@@ -27,6 +29,13 @@
             </android.support.v4.view.ViewPager>
 
         </LinearLayout>
+
+        <ListView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/nick_list"
+            android:layout_gravity="right"
+            android:background="@android:color/background_light"/>
 
     </android.support.v4.widget.DrawerLayout>
 

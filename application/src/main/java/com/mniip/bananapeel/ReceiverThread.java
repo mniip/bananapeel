@@ -8,11 +8,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ReceiverThread extends Thread
 {
-	private Server server;
+	private IRCConnection server;
 	private AtomicBoolean hadError;
 	private Socket socket;
 
-	public ReceiverThread(Server srv, Socket sock, AtomicBoolean error)
+	public ReceiverThread(IRCConnection srv, Socket sock, AtomicBoolean error)
 	{
 		server = srv;
 		socket = sock;

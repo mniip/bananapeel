@@ -32,14 +32,11 @@ public class ClientCommandHandler
 	@ClientCommandHandler.Hook
 	private static void commandSERVER(Tab tab, List<String> words, List<String> wordEols)
 	{
-		Server server = new Server(tab.getService(), tab.getServerTab());
-		tab.getServerTab().server = server;
-		server.connect(words.get(1), 6667);
+		tab.getServerTab().server.connect(words.get(1), 6667);
 	}
 
 	private static void unhandledCommand(Tab tab, String command, List<String> words, List<String> wordEols)
 	{
-		if(tab.getServerTab().server != null)
-			tab.getServerTab().server.send(IRCMessage.fromIRC(wordEols.get(0)));
+		tab.getServerTab().server.send(IRCMessage.fromIRC(wordEols.get(0)));
 	}
 }

@@ -10,13 +10,13 @@ public class IRCCommandHandler
 	@Retention(RetentionPolicy.RUNTIME)
 	private @interface Hook { }
 
-	public static void handle(Server srv, IRCMessage msg)
+	public static void handle(IRCServer srv, IRCMessage msg)
 	{
 		String methodName = "handle" + msg.command.toUpperCase();
 		Method m;
 		try
 		{
-			m = IRCCommandHandler.class.getDeclaredMethod(methodName, Server.class, IRCMessage.class);
+			m = IRCCommandHandler.class.getDeclaredMethod(methodName, IRCServer.class, IRCMessage.class);
 			if(m.getAnnotation(Hook.class) != null)
 				m.invoke(null, srv, msg);
 		}
@@ -33,7 +33,7 @@ public class IRCCommandHandler
 	}
 
 	@IRCCommandHandler.Hook
-	private static void handleJOIN(Server srv, IRCMessage msg)
+	private static void handleJOIN(IRCServer srv, IRCMessage msg)
 	{
 		if(msg.args.length >= 1 && msg.source != null)
 		{
@@ -46,12 +46,11 @@ public class IRCCommandHandler
 				tab = srv.getService().findTab(srv.getTab(), channel);
 			if(tab != null)
 				tab.putLine("* " + nick + " joined " + channel);
-
 		}
 	}
 
 	@IRCCommandHandler.Hook
-	private static void handlePRIVMSG(Server srv, IRCMessage msg)
+	private static void handlePRIVMSG(IRCServer srv, IRCMessage msg)
 	{
 		if(msg.args.length >= 2)
 		{
@@ -66,7 +65,7 @@ public class IRCCommandHandler
 		}
 	}
 
-	private static void handleUnhandled(Server srv, IRCMessage msg)
+	private static void handleUnhandled(IRCServer srv, IRCMessage msg)
 	{
 		srv.getTab().putLine(msg.toIRC());
 	}

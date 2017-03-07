@@ -1,7 +1,5 @@
 package com.mniip.bananapeel;
 
-import android.util.Log;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
@@ -11,14 +9,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SenderThread extends Thread
 {
-    private Server server;
+    private IRCConnection server;
     private Socket socket;
     private AtomicBoolean hadError;
     private LinkedBlockingQueue<IRCMessage> queue = new LinkedBlockingQueue<>();
     private String hostname;
     private int port;
 
-    public SenderThread(Server srv, Socket sock, AtomicBoolean error, String host, int portNum)
+    public SenderThread(IRCConnection srv, Socket sock, AtomicBoolean error, String host, int portNum)
     {
         server = srv;
         socket = sock;

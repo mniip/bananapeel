@@ -38,7 +38,8 @@ public class IRCService extends Service
 	{
 		preferences = new IRCPreferences(this);
 
-		createServerTab();
+		ServerTab tab = createServerTab();
+		tab.server = new IRCServer(this, tab);
 
 		Log.d("BananaPeel", "Service created");
 		super.onCreate();
@@ -67,9 +68,9 @@ public class IRCService extends Service
 	SparseArray<Tab> tabs = new SparseArray<>();
 	private int unusedTabId = 0;
 
-	public Tab createServerTab()
+	public ServerTab createServerTab()
 	{
-		Tab t = new ServerTab(this, unusedTabId++);
+		ServerTab t = new ServerTab(this, unusedTabId++);
 		tabs.put(t.getId(), t);
 		if(listener != null)
 			listener.onTabAdded(t.getId());
@@ -142,17 +143,5 @@ public class IRCService extends Service
 
 		if(words.size() > 0)
 			ClientCommandHandler.handle(tab, words.get(0).toUpperCase(), words, wordEols);
-	}
-
-	public void onServerConnected(Server srv)
-	{
-		srv.ourNick = preferences.getDefaultNick();
-		srv.send(new IRCMessage("NICK", srv.ourNick));
-		srv.send(new IRCMessage("USER", preferences.getDefaultUser(), "*", "*", preferences.getDefaultRealName()));
-	}
-
-	public void onIRCMessageReceived(Server srv, IRCMessage msg)
-	{
-		IRCCommandHandler.handle(srv, msg);
 	}
 }

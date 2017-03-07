@@ -2,16 +2,14 @@ package com.mniip.bananapeel;
 
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 
 import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class Server
+public class IRCConnection
 {
-	private IRCService service;
-	private ServerTab serverTab;
+	private IRCServer server;
 	private Socket socket;
 	private ReceiverThread receiver;
 	private SenderThread sender;
@@ -19,20 +17,14 @@ public class Server
 
 	public String ourNick;
 
-	public Server(IRCService srv, ServerTab sTab)
+	public IRCConnection(IRCServer srv)
 	{
-		service = srv;
-		serverTab = sTab;
+		server = srv;
 	}
 
-	public IRCService getService()
+	public IRCServer getServer()
 	{
-		return service;
-	}
-
-	public ServerTab getTab()
-	{
-		return serverTab;
+		return server;
 	}
 
 	public void connect(String hostname, int port)
@@ -48,7 +40,14 @@ public class Server
 	{
 		receiver = new ReceiverThread(this, socket, hadError);
 		receiver.start();
-		service.onServerConnected(this);
+		new Handler(Looper.getMainLooper()).post(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				server.onConnected();
+			}
+		});
 	}
 
 	public void onMessageReceived(final IRCMessage msg)
@@ -58,7 +57,7 @@ public class Server
 			@Override
 			public void run()
 			{
-				service.onIRCMessageReceived(Server.this, msg);
+				server.onIRCMessageReceived(msg);
 			}
 		});
 	}
@@ -77,6 +76,8 @@ public class Server
 
 		receiver = null;
 		sender = null;
+
+		server.onError(e);
 	}
 
 	public void send(IRCMessage msg)

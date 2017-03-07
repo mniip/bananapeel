@@ -10,7 +10,12 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.util.SparseArray;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.List;
 
 public class IRCService extends Service
 {
@@ -142,6 +147,40 @@ public class IRCService extends Service
 		while(idx != -1);
 
 		if(words.size() > 0)
-			ClientCommandHandler.handle(tab, words.get(0).toUpperCase(), words, wordEols);
+			ClientCommandHandler.handle(tab, words.get(0), words, wordEols);
+	}
+
+	public static class ClientCommandHandler
+	{
+		@Retention(RetentionPolicy.RUNTIME)
+		private @interface Hook { }
+
+		public static void handle(Tab tab, String command, List<String> words, List<String> wordEols)
+		{
+			String methodName = "command" + command.toUpperCase();
+			try
+			{
+				Method m = ClientCommandHandler.class.getDeclaredMethod(methodName, Tab.class, List.class, List.class);
+				if(m.getAnnotation(Hook.class) != null)
+					m.invoke(null, tab, words, wordEols);
+			}
+			catch(NoSuchMethodException e)
+			{
+				unhandledCommand(tab, command, words, wordEols);
+			}
+			catch(IllegalAccessException e) { }
+			catch(InvocationTargetException e) { }
+		}
+
+		@ClientCommandHandler.Hook
+		private static void commandSERVER(Tab tab, List<String> words, List<String> wordEols)
+		{
+			tab.getServerTab().server.connect(words.get(1), 6667);
+		}
+
+		private static void unhandledCommand(Tab tab, String command, List<String> words, List<String> wordEols)
+		{
+			tab.getServerTab().server.send(IRCMessage.fromIRC(wordEols.get(0)));
+		}
 	}
 }

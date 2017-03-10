@@ -11,12 +11,10 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
-import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -95,9 +93,9 @@ public class MainScreen extends FragmentActivity
 	public class TabAdapter extends FragmentStatePagerAdapter
 	{
 		private IRCService service;
-		private SparseArray<Integer> tabPositions = new SparseArray<>();
+		private IntMap<Integer> tabPositions = new IntMap<>();
 		private ArrayList<Integer> tabIds = new ArrayList<>();
-		private SparseArray<TabFragment> tabFragments = new SparseArray<>();
+		private IntMap<TabFragment> tabFragments = new IntMap<>();
 
 		public TabAdapter(FragmentManager manager)
 		{
@@ -110,12 +108,8 @@ public class MainScreen extends FragmentActivity
 			tabPositions.clear();
 			tabIds.clear();
 
-			for(int i = 0; i < service.tabs.size(); i++)
-			{
-				tabPositions.put(service.tabs.keyAt(i), i);
-				tabIds.add(i, service.tabs.keyAt(i));
-			}
-			notifyDataSetChanged();
+			for(IntMap.KV<Tab> kv : service.tabs.pairs())
+				onTabAdded(kv.getKey());
 		}
 
 		public void onTabViewCreated(TabFragment view, int tabNumber)
@@ -157,9 +151,9 @@ public class MainScreen extends FragmentActivity
 						pos = p + 1;
 				}
 				tabIds.add(pos, tabId);
-				for(int i = 0; i < tabPositions.size(); i++)
-					if(tabPositions.valueAt(i) >= pos)
-						tabPositions.setValueAt(i, tabPositions.valueAt(i) + 1);
+				for(IntMap.KV<Integer> kv : tabPositions.pairs())
+					if(kv.getValue() >= pos)
+						kv.setValue(kv.getValue() + 1);
 				tabPositions.put(tabId, pos);
 				notifyDataSetChanged();
 			}
@@ -172,9 +166,9 @@ public class MainScreen extends FragmentActivity
 			{
 				tabIds.remove(tabPos);
 				tabPositions.delete(tabId);
-				for(int i = 0; i < tabPositions.size(); i++)
-					if(tabPositions.valueAt(i) > tabPos)
-						tabPositions.setValueAt(i, tabPositions.valueAt(i) - 1);
+				for(IntMap.KV<Integer> kv : tabPositions.pairs())
+					if(kv.getValue() > tabPos)
+						kv.setValue(kv.getValue() - 1);
 				notifyDataSetChanged();
 			}
 		}

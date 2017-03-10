@@ -8,7 +8,6 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
-import android.util.SparseArray;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -72,7 +71,7 @@ public class IRCService extends Service
 	@Override
 	public IBinder onBind(Intent i) { return new Binder(); }
 
-	SparseArray<Tab> tabs = new SparseArray<>();
+	IntMap<Tab> tabs = new IntMap<>();
 	private int unusedTabId = 0;
 
 	public ServerTab createServerTab()
@@ -105,12 +104,9 @@ public class IRCService extends Service
 
 	public Tab findTab(ServerTab sTab, String title)
 	{
-		for(int i = 0; i < tabs.size(); i++)
-		{
-			Tab tab = tabs.valueAt(i);
+		for(Tab tab : tabs)
 			if(tab.getServerTab() == sTab && tab.getTitle().equals(title))
 				return tab;
-		}
 		return null;
 	}
 

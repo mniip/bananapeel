@@ -197,9 +197,7 @@ public class IRCServer
 			String to = msg.args[0];
 			if(from.equals(srv.ourNick))
 				srv.ourNick = to;
-			for(int i = 0; i < srv.getService().tabs.size(); i++)
-			{
-				Tab tab = srv.getService().tabs.valueAt(i);
+			for(Tab tab : srv.getService().tabs)
 				if(tab.nickList.contains(from))
 				{
 					tab.nickList.remove(from);
@@ -207,7 +205,6 @@ public class IRCServer
 					srv.getService().changeNickList(tab);
 					tab.putLine("* " + from + " changed nick to " + to);
 				}
-			}
 		}
 
 		@Hook(command = "PART", minParams = 1, requireSource = true)
@@ -265,16 +262,13 @@ public class IRCServer
 		{
 			String nick = msg.getNick();
 			String reason = msg.args.length >= 1 ? msg.args[0] : null;
-			for(int i = 0; i < srv.getService().tabs.size(); i++)
-			{
-				Tab tab = srv.getService().tabs.valueAt(i);
+			for(Tab tab : srv.getService().tabs)
 				if(tab.nickList.contains(nick))
 				{
 					tab.nickList.remove(nick);
 					srv.getService().changeNickList(tab);
 					tab.putLine("* " + nick + " quit" + (reason == null ? "" : " (" + reason + ")"));
 				}
-			}
 		}
 
 		private static void handleUnhandled(IRCServer srv, IRCMessage msg)

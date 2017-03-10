@@ -1,5 +1,6 @@
 package com.mniip.bananapeel;
 
+import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.InvocationTargetException;
@@ -74,19 +75,38 @@ public class IRCServer
 	public static class IRCCommandHandler
 	{
 		@Retention(RetentionPolicy.RUNTIME)
-		private @interface Hook { }
+		private @interface Hook
+		{
+			String command();
+			int minParams() default 0;
+			boolean requireSource() default false;
+		}
+
+		@Retention(RetentionPolicy.RUNTIME)
+		private @interface Hooks
+		{
+			Hook[] value();
+		}
 
 		public static void handle(IRCServer srv, IRCMessage msg)
 		{
-			String methodName = "handle" + msg.command.toUpperCase();
 			try
 			{
-				Method m = IRCCommandHandler.class.getDeclaredMethod(methodName, IRCServer.class, IRCMessage.class);
-				if(m.getAnnotation(Hook.class) != null)
-					m.invoke(null, srv, msg);
-			}
-			catch(NoSuchMethodException e)
-			{
+				for(Method m : IRCCommandHandler.class.getDeclaredMethods())
+					for(Annotation a : m.getDeclaredAnnotations())
+						if(a instanceof Hook)
+							if(((Hook)a).command().equals(msg.command) && ((Hook)a).minParams() <= msg.args.length && (!((Hook)a).requireSource() || msg.source != null))
+							{
+								m.invoke(null, srv, msg);
+								return;
+							}
+						else if(a instanceof Hooks)
+							for(Hook h : ((Hooks)a).value())
+								if(h.command().equals(msg.command) && h.minParams() <= msg.args.length && (!h.requireSource() || msg.source != null))
+								{
+									m.invoke(null, srv, msg);
+									return;
+								}
 				handleUnhandled(srv, msg);
 			}
 			catch(IllegalAccessException e) { }
@@ -97,8 +117,8 @@ public class IRCServer
 			}
 		}
 
-		@IRCCommandHandler.Hook
-		private static void handle001(IRCServer srv, IRCMessage msg)
+		@Hook(command = "001")
+		private static void onWelcome(IRCServer srv, IRCMessage msg)
 		{
 			if(msg.args.length >= 1)
 				srv.ourNick = msg.args[0];
@@ -106,194 +126,155 @@ public class IRCServer
 			handleUnhandled(srv, msg);
 		}
 
-		@IRCCommandHandler.Hook
-		private static void handle353(IRCServer srv, IRCMessage msg)
+		@Hook(command = "353", minParams = 4)
+		private static void onNamesList(IRCServer srv, IRCMessage msg)
 		{
-			if(msg.args.length >= 4)
+			String channel = msg.args[2];
+			String names = msg.args[3];
+			if(srv.waitingNames.contains(channel))
 			{
-				String channel = msg.args[2];
-				String names = msg.args[3];
-				if(srv.waitingNames.contains(channel))
+				Tab tab = srv.getService().findTab(srv.getTab(), channel);
+				if(tab != null)
 				{
-					Tab tab = srv.getService().findTab(srv.getTab(), channel);
-					if(tab != null)
+					for(String nick : names.split(" "))
 					{
-						for(String nick : names.split(" "))
-						{
-							while(nick.length() > 0 && (nick.charAt(0) == '@' || nick.charAt(0) == '+'))
-								nick = nick.substring(1);
-							tab.nickList.add(nick);
-							srv.getService().changeNickList(tab);
-						}
-						return;
+						while(nick.length() > 0 && (nick.charAt(0) == '@' || nick.charAt(0) == '+'))
+							nick = nick.substring(1);
+						tab.nickList.add(nick);
+						srv.getService().changeNickList(tab);
 					}
-				}
-			}
-			handleUnhandled(srv, msg);
-		}
-
-		@IRCCommandHandler.Hook
-		private static void handle366(IRCServer srv, IRCMessage msg)
-		{
-			if(msg.args.length >= 2)
-			{
-				String channel = msg.args[1];
-				if(srv.waitingNames.contains(channel))
-				{
-					srv.waitingNames.remove(channel);
 					return;
 				}
 			}
 			handleUnhandled(srv, msg);
 		}
 
-		@IRCCommandHandler.Hook
-		private static void handle376(IRCServer srv, IRCMessage msg)
+		@Hook(command = "366", minParams = 2)
+		private static void onEndOfNames(IRCServer srv, IRCMessage msg)
+		{
+			String channel = msg.args[1];
+			if(srv.waitingNames.contains(channel))
+				srv.waitingNames.remove(channel);
+			else
+				handleUnhandled(srv, msg);
+		}
+
+		@Hooks({@Hook(command = "376"), @Hook(command = "422")})
+		private static void onMotd(IRCServer srv, IRCMessage msg)
 		{
 			srv.onRegistered();
 			handleUnhandled(srv, msg);
 		}
 
-		@IRCCommandHandler.Hook
-		private static void handle422(IRCServer srv, IRCMessage msg)
+		@Hook(command = "JOIN", minParams = 1, requireSource = true)
+		private static void onJoin(IRCServer srv, IRCMessage msg)
 		{
-			srv.onRegistered();
-			handleUnhandled(srv, msg);
-		}
-
-		@IRCCommandHandler.Hook
-		private static void handleJOIN(IRCServer srv, IRCMessage msg)
-		{
-			if(msg.args.length >= 1 && msg.source != null)
+			String nick = msg.getNick();
+			String channel = msg.args[0];
+			Tab tab;
+			if(nick.equals(srv.ourNick))
 			{
-				String nick = msg.getNick();
-				String channel = msg.args[0];
-				Tab tab;
-				if(nick.equals(srv.ourNick))
-				{
-					tab = srv.getService().createTab(srv.getTab(), channel);
-					srv.waitingNames.add(channel);
-				}
-				else
-				{
-					tab = srv.getService().findTab(srv.getTab(), channel);
-					if(tab != null)
-					{
-						tab.nickList.add(nick);
-						srv.getService().changeNickList(tab);
-					}
-				}
+				tab = srv.getService().createTab(srv.getTab(), channel);
+				srv.waitingNames.add(channel);
+			}
+			else
+			{
+				tab = srv.getService().findTab(srv.getTab(), channel);
 				if(tab != null)
-					tab.putLine("* " + nick + " joined " + channel);
-			}
-			else
-				handleUnhandled(srv, msg);
-		}
-
-		@IRCCommandHandler.Hook
-		private static void handleNICK(IRCServer srv, IRCMessage msg)
-		{
-			if(msg.args.length >= 1 && msg.source != null)
-			{
-				String from = msg.getNick();
-				String to = msg.args[0];
-				if(from.equals(srv.ourNick))
-					srv.ourNick = to;
-				for(int i = 0; i < srv.getService().tabs.size(); i++)
 				{
-					Tab tab = srv.getService().tabs.valueAt(i);
-					if(tab.nickList.contains(from))
-					{
-						tab.nickList.remove(from);
-						tab.nickList.add(to);
-						srv.getService().changeNickList(tab);
-						tab.putLine("* " + from + " changed nick to " + to);
-					}
+					tab.nickList.add(nick);
+					srv.getService().changeNickList(tab);
 				}
 			}
-			else
-				handleUnhandled(srv, msg);
+			if(tab != null)
+				tab.putLine("* " + nick + " joined " + channel);
 		}
 
-		@IRCCommandHandler.Hook
-		private static void handlePART(IRCServer srv, IRCMessage msg)
+		@Hook(command = "NICK", minParams = 1, requireSource = true)
+		private static void onNick(IRCServer srv, IRCMessage msg)
 		{
-			if(msg.args.length >= 1 && msg.source != null)
+			String from = msg.getNick();
+			String to = msg.args[0];
+			if(from.equals(srv.ourNick))
+				srv.ourNick = to;
+			for(int i = 0; i < srv.getService().tabs.size(); i++)
 			{
-				String nick = msg.getNick();
-				String channel = msg.args[0];
-				String reason = msg.args.length >= 2 ? msg.args[1] : null;
-				Tab tab = srv.getService().findTab(srv.getTab(), channel);
-				if(nick.equals(srv.ourNick))
+				Tab tab = srv.getService().tabs.valueAt(i);
+				if(tab.nickList.contains(from))
 				{
-					if(tab != null)
-						srv.getService().deleteTab(tab.getId());
+					tab.nickList.remove(from);
+					tab.nickList.add(to);
+					srv.getService().changeNickList(tab);
+					tab.putLine("* " + from + " changed nick to " + to);
 				}
-				else
-					if(tab != null)
-					{
-						tab.nickList.remove(nick);
-						srv.getService().changeNickList(tab);
-						tab.putLine("* " + nick + " left " + channel + (reason == null ? "" : " (" + reason + ")"));
-					}
+			}
+		}
+
+		@Hook(command = "PART", minParams = 1, requireSource = true)
+		private static void onPart(IRCServer srv, IRCMessage msg)
+		{
+			String nick = msg.getNick();
+			String channel = msg.args[0];
+			String reason = msg.args.length >= 2 ? msg.args[1] : null;
+			Tab tab = srv.getService().findTab(srv.getTab(), channel);
+			if(nick.equals(srv.ourNick))
+			{
+				if(tab != null)
+					srv.getService().deleteTab(tab.getId());
 			}
 			else
-				handleUnhandled(srv, msg);
+				if(tab != null)
+				{
+					tab.nickList.remove(nick);
+					srv.getService().changeNickList(tab);
+					tab.putLine("* " + nick + " left " + channel + (reason == null ? "" : " (" + reason + ")"));
+				}
 		}
 
-		@IRCCommandHandler.Hook
-		private static void handlePING(IRCServer srv, IRCMessage msg)
+		@Hook(command = "PING")
+		private static void onPing(IRCServer srv, IRCMessage msg)
 		{
 			srv.send(new IRCMessage("PONG", msg.args));
 		}
 
-		@IRCCommandHandler.Hook
-		private static void handlePRIVMSG(IRCServer srv, IRCMessage msg)
+		@Hook(command = "PRIVMSG", minParams = 2, requireSource = true)
+		private static void onPrivmsg(IRCServer srv, IRCMessage msg)
 		{
-			if(msg.args.length >= 2 && msg.source != null)
+			String nick = msg.getNick();
+			String target = msg.args[0];
+			String text = msg.args[1];
+			if(target.equals(srv.ourNick))
 			{
-				String nick = msg.getNick();
-				String target = msg.args[0];
-				String text = msg.args[1];
-				if(target.equals(srv.ourNick))
-				{
-					Tab tab = srv.getService().findTab(srv.getTab(), nick);
-					if(tab == null)
-						tab = srv.getService().createTab(srv.getTab(), nick);
-					tab.putLine("<" + nick + "> " + text);
-					return;
-				}
-				else
-				{
-					Tab tab = srv.getService().findTab(srv.getTab(), target);
-					if(tab != null)
-						tab.putLine("<" + nick + "> " + text);
-					return;
-				}
-			}
-			handleUnhandled(srv, msg);
-		}
-
-		@IRCCommandHandler.Hook
-		private static void handleQUIT(IRCServer srv, IRCMessage msg)
-		{
-			if(msg.source != null)
-			{
-				String nick = msg.getNick();
-				String reason = msg.args.length >= 1 ? msg.args[0] : null;
-				for(int i = 0; i < srv.getService().tabs.size(); i++)
-				{
-					Tab tab = srv.getService().tabs.valueAt(i);
-					if(tab.nickList.contains(nick))
-					{
-						tab.nickList.remove(nick);
-						srv.getService().changeNickList(tab);
-						tab.putLine("* " + nick + " quit" + (reason == null ? "" : " (" + reason + ")"));
-					}
-				}
+				Tab tab = srv.getService().findTab(srv.getTab(), nick);
+				if(tab == null)
+					tab = srv.getService().createTab(srv.getTab(), nick);
+				tab.putLine("<" + nick + "> " + text);
+				return;
 			}
 			else
-				handleUnhandled(srv, msg);
+			{
+				Tab tab = srv.getService().findTab(srv.getTab(), target);
+				if(tab != null)
+					tab.putLine("<" + nick + "> " + text);
+				return;
+			}
+		}
+
+		@Hook(command = "QUIT", requireSource = true)
+		private static void onQuit(IRCServer srv, IRCMessage msg)
+		{
+			String nick = msg.getNick();
+			String reason = msg.args.length >= 1 ? msg.args[0] : null;
+			for(int i = 0; i < srv.getService().tabs.size(); i++)
+			{
+				Tab tab = srv.getService().tabs.valueAt(i);
+				if(tab.nickList.contains(nick))
+				{
+					tab.nickList.remove(nick);
+					srv.getService().changeNickList(tab);
+					tab.putLine("* " + nick + " quit" + (reason == null ? "" : " (" + reason + ")"));
+				}
+			}
 		}
 
 		private static void handleUnhandled(IRCServer srv, IRCMessage msg)

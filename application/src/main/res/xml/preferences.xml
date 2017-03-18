@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceScreen
+        android:title="Defaults">
+
+        <EditTextPreference
+            android:key="defaultNick"
+            android:title="Nickname" />
+
+    </PreferenceScreen>
+
+    <PreferenceScreen
+        android:title="Servers">
+
+        <intent
+            android:targetPackage="com.mniip.bananapeel"
+            android:targetClass="com.mniip.bananapeel.ServerListPreferencesScreen" />
+
+    </PreferenceScreen>
+
+</PreferenceScreen>

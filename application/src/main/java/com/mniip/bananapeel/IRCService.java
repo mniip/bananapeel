@@ -189,13 +189,26 @@ public class IRCService extends Service
 				unhandledCommand(tab, command, words, wordEols);
 			}
 			catch(IllegalAccessException e) { }
-			catch(InvocationTargetException e) { }
+			catch(InvocationTargetException e)
+			{
+				if(e.getCause() instanceof RuntimeException)
+					throw (RuntimeException)e.getCause();
+			}
 		}
 
 		@ClientCommandHandler.Hook
 		private static void commandSERVER(Tab tab, List<String> words, List<String> wordEols)
 		{
-			tab.getServerTab().server.connect(words.get(1), 6667);
+			if(words.size() >= 1)
+			{
+				String server = words.get(1);
+				IRCServerPreferences preferences = tab.getService().preferences.getServer(server);
+				if(preferences != null)
+					tab.getServerTab().server.connect(preferences.getHost(), preferences.getPort());
+				else
+					tab.getServerTab().server.connect(words.get(1), 6667);
+				tab.getServerTab().setTitle(server);
+			}
 		}
 
 		private static void unhandledCommand(Tab tab, String command, List<String> words, List<String> wordEols)

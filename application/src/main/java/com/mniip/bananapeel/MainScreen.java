@@ -12,6 +12,8 @@ import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -162,7 +164,7 @@ public class MainScreen extends FragmentActivity
 		public void onTabRemoved(int tabId)
 		{
 			Integer tabPos = tabPositions.get(tabId);
-			if (tabPos != null)
+			if(tabPos != null)
 			{
 				tabIds.remove(tabPos);
 				tabPositions.delete(tabId);
@@ -183,7 +185,7 @@ public class MainScreen extends FragmentActivity
 		{
 			Integer tabId = tabIds.get(position);
 			TabFragment fragment = new TabFragment();
-			if (tabId == null)
+			if(tabId == null)
 				tabId = -1;
 			fragment.setId(tabId);
 			return fragment;
@@ -193,7 +195,7 @@ public class MainScreen extends FragmentActivity
 		public String getPageTitle(int position)
 		{
 			Integer tabId = tabIds.get(position);
-			if (tabId != null)
+			if(tabId != null)
 				return service.tabs.get(tabId).getTitle();
 			else return "";
 		}
@@ -244,16 +246,16 @@ public class MainScreen extends FragmentActivity
 	}
 
 	@Override
-    protected void onCreate(Bundle savedInstanceState)
-    {
+	protected void onCreate(Bundle savedInstanceState)
+	{
 		Log.d("BananaPeel", "MainActivity created");
-        super.onCreate(savedInstanceState);
+		super.onCreate(savedInstanceState);
 
 		((ServiceApplication)getApplication()).ensureServiceStarted();
 		Intent i = new Intent(this, IRCService.class);
 		bindService(i, conn, BIND_IMPORTANT);
 
-        setContentView(R.layout.main_screen);
+		setContentView(R.layout.main_screen);
 
 		ListView nickList = (ListView)findViewById(R.id.nick_list);
 		nickListAdapter = new NickListAdapter();
@@ -265,9 +267,15 @@ public class MainScreen extends FragmentActivity
 		pager.addOnPageChangeListener(new ViewPager.OnPageChangeListener()
 		{
 			@Override
-			public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) { }
+			public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels)
+			{
+			}
+
 			@Override
-			public void onPageScrollStateChanged(int state)	{ }
+			public void onPageScrollStateChanged(int state)
+			{
+			}
+
 			@Override
 			public void onPageSelected(int position)
 			{
@@ -277,7 +285,7 @@ public class MainScreen extends FragmentActivity
 				nickListAdapter.notifyDataSetChanged();
 			}
 		});
-    }
+	}
 
 	@Override
 	protected void onDestroy()
@@ -286,5 +294,23 @@ public class MainScreen extends FragmentActivity
 		super.onDestroy();
 
 		unbindService(conn);
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu)
+	{
+		getMenuInflater().inflate(R.xml.main_screen_menu, menu);
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item)
+	{
+		if(item.getItemId() == R.id.menu_settings)
+		{
+			startActivity(new Intent(this, PreferencesScreen.class));
+			return true;
+		}
+		return false;
 	}
 }

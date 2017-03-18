@@ -3,10 +3,15 @@ package com.mniip.bananapeel;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import java.util.List;
+
 public class IRCPreferences
 {
 	private Context context;
 	private SharedPreferences preferences;
+	private SharedPreferences servers;
+
+	public static final String PREF_FILE = "main";
 
 	private static final String PREF_DEFAULT_NICK = "defaultNick";
 	private static final String PREF_DEFAULT_USER = "defaultUser";
@@ -18,7 +23,7 @@ public class IRCPreferences
 		if(p.getString(PREF_DEFAULT_NICK, null) == null)
 			e.putString(PREF_DEFAULT_NICK, "BananaPeel");
 		if(p.getString(PREF_DEFAULT_USER, null) == null)
-			e.putString(PREF_DEFAULT_USER, "bananapeel");
+			e.putString(PREF_DEFAULT_USER, "irc");
 		if(p.getString(PREF_DEFAULT_REAL_NAME, null) == null)
 			e.putString(PREF_DEFAULT_REAL_NAME, "Banana Peel");
 		e.apply();
@@ -27,8 +32,27 @@ public class IRCPreferences
 	public IRCPreferences(Context ctx)
 	{
 		context = ctx;
-		preferences = context.getSharedPreferences("main", Context.MODE_PRIVATE);
+		preferences = context.getSharedPreferences(PREF_FILE, Context.MODE_PRIVATE);
+		servers = context.getSharedPreferences(IRCServerPreferences.PREF_FILE, Context.MODE_PRIVATE);
 		setDefaults(preferences);
+	}
+
+	public List<String> listServers()
+	{
+		return IRCServerPreferences.listServers(servers);
+	}
+
+	public IRCServerPreferences getServer(String name)
+	{
+		if(IRCServerPreferences.hasServer(servers, name))
+			return new IRCServerPreferences(servers, name);
+		else
+			return null;
+	}
+
+	public IRCServerPreferences newServer(String name)
+	{
+		return new IRCServerPreferences(servers, name);
 	}
 
 	public String getDefaultNick()

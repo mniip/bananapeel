@@ -5,4 +5,11 @@
         android:key="host"
         android:title="Server hostname" />
 
+    <com.mniip.bananapeel.EditIntPreference
+        android:key="port"
+        android:title="Server port"
+        android:inputType="number"
+        min="0"
+        max="65535" />
+
 </PreferenceScreen>

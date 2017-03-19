@@ -19,6 +19,7 @@ public class ServerPreferencesScreen extends PreferenceActivity implements Share
 		server = getIntent().getStringExtra("server");
 
 		getPreferenceManager().setSharedPreferencesName(IRCServerPreferences.PREF_FILE);
+		getPreferenceManager().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
 
 		addPreferencesFromResource(R.xml.server_preferences);
 
@@ -33,7 +34,9 @@ public class ServerPreferencesScreen extends PreferenceActivity implements Share
 			Preference preference = screen.getPreference(i);
 			String key = server + ";" + preference.getKey();
 			preference.setKey(key);
-			if(preference instanceof EditTextPreference)
+			if(preference instanceof EditIntPreference)
+				((EditIntPreference)preference).setInt(preference.getSharedPreferences().getInt(key, -1));
+			else if(preference instanceof EditTextPreference)
 				((EditTextPreference)preference).setText(preference.getSharedPreferences().getString(key, null));
 			if(preference instanceof PreferenceScreen)
 				setKeys((PreferenceScreen)preference);

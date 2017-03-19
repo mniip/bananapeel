@@ -8,7 +8,8 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -30,6 +31,10 @@ public class MainScreen extends FragmentActivity
 	public TabAdapter getTabAdapter()
 	{
 		return tabAdapter;
+	}
+	public NickListAdapter getNickListAdapter()
+	{
+		return nickListAdapter;
 	}
 
 	private final IRCInterfaceListener ircInterfaceListener = new IRCInterfaceListener()
@@ -92,121 +97,6 @@ public class MainScreen extends FragmentActivity
 		}
 	};
 
-	public class TabAdapter extends FragmentStatePagerAdapter
-	{
-		private IRCService service;
-		private IntMap<Integer> tabPositions = new IntMap<>();
-		private ArrayList<Integer> tabIds = new ArrayList<>();
-		private IntMap<TabFragment> tabFragments = new IntMap<>();
-
-		public TabAdapter(FragmentManager manager)
-		{
-			super(manager);
-		}
-
-		public void setService(IRCService s)
-		{
-			service = s;
-			tabPositions.clear();
-			tabIds.clear();
-
-			for(IntMap.KV<Tab> kv : service.tabs.pairs())
-				onTabAdded(kv.getKey());
-		}
-
-		public void onTabViewCreated(TabFragment view, int tabNumber)
-		{
-			tabFragments.put(tabNumber, view);
-		}
-
-		public void onTabViewDestroyed(int tabNumber)
-		{
-			tabFragments.delete(tabNumber);
-		}
-
-		public void onTabLinesAdded(int tabId)
-		{
-			TabFragment fragment = tabFragments.get(tabId);
-			if(fragment != null)
-				fragment.onLinesAdded();
-		}
-
-		public void onTabCleared(int tabId)
-		{
-			TabFragment fragment = tabFragments.get(tabId);
-			if(fragment != null)
-				fragment.onCleared();
-		}
-
-		public void onTabAdded(int tabId)
-		{
-			Tab tab = service.tabs.get(tabId);
-			if(tab != null)
-			{
-				int pos = 0;
-				for(int p = 0; p < tabIds.size(); p++)
-				{
-					Tab t = service.tabs.get(tabIds.get(p));
-					if(tab.getServerTab() == t)
-						pos = p + 1;
-					if(t != null && t.getTitle().compareToIgnoreCase(tab.getTitle()) < 0)
-						pos = p + 1;
-				}
-				tabIds.add(pos, tabId);
-				for(IntMap.KV<Integer> kv : tabPositions.pairs())
-					if(kv.getValue() >= pos)
-						kv.setValue(kv.getValue() + 1);
-				tabPositions.put(tabId, pos);
-				notifyDataSetChanged();
-			}
-		}
-
-		public void onTabRemoved(int tabId)
-		{
-			Integer tabPos = tabPositions.get(tabId);
-			if(tabPos != null)
-			{
-				tabIds.remove(tabPos);
-				tabPositions.delete(tabId);
-				for(IntMap.KV<Integer> kv : tabPositions.pairs())
-					if(kv.getValue() > tabPos)
-						kv.setValue(kv.getValue() - 1);
-				notifyDataSetChanged();
-			}
-		}
-
-		public void onTabTitleChanged(int tabId)
-		{
-			notifyDataSetChanged();
-		}
-
-		@Override
-		public Fragment getItem(int position)
-		{
-			Integer tabId = tabIds.get(position);
-			TabFragment fragment = new TabFragment();
-			if(tabId == null)
-				tabId = -1;
-			fragment.setId(tabId);
-			return fragment;
-		}
-
-		@Override
-		public String getPageTitle(int position)
-		{
-			Integer tabId = tabIds.get(position);
-			if(tabId != null)
-				return service.tabs.get(tabId).getTitle();
-			else return "";
-		}
-
-		@Override
-		public int getCount()
-		{
-			return tabIds.size();
-		}
-	}
-
 	public class NickListAdapter extends BaseAdapter
 	{
 		@Override
@@ -262,29 +152,8 @@ public class MainScreen extends FragmentActivity
 		nickList.setAdapter(nickListAdapter);
 
 		ViewPager pager = (ViewPager)findViewById(R.id.view_pager);
-		tabAdapter = new TabAdapter(getSupportFragmentManager());
+		tabAdapter = new TabAdapter(getSupportFragmentManager(), this);
 		pager.setAdapter(tabAdapter);
-		pager.addOnPageChangeListener(new ViewPager.OnPageChangeListener()
-		{
-			@Override
-			public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels)
-			{
-			}
-
-			@Override
-			public void onPageScrollStateChanged(int state)
-			{
-			}
-
-			@Override
-			public void onPageSelected(int position)
-			{
-				Integer id = tabAdapter.tabIds.get(position);
-				if(id != null)
-					getService().setFrontTab(id);
-				nickListAdapter.notifyDataSetChanged();
-			}
-		});
 	}
 
 	@Override

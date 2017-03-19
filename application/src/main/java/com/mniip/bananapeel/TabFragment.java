@@ -17,13 +17,29 @@ public class TabFragment extends Fragment
 {
     private int tabId = -1;
     private boolean sticky = true;
+    private boolean active = true;
     private TextLineAdapter adapter;
     private RecyclerView recycler;
 
 
-    public void setId(int id)
+    public void setTabId(int id)
     {
         tabId = id;
+    }
+
+    public int getTabId()
+    {
+        return tabId;
+    }
+
+    public boolean isActive()
+    {
+        return active;
+    }
+
+    public void setInactive()
+    {
+        active = false;
     }
 
     @Override

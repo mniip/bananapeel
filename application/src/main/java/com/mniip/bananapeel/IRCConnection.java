@@ -62,8 +62,12 @@ public class IRCConnection
 		});
 	}
 
-	public void onError(Exception e)
+	public void onError(final Exception e)
 	{
+		sender.interrupt();
+		if(receiver != null)
+			receiver.interrupt();
+
 		try
 		{
 			socket.close();
@@ -71,13 +75,38 @@ public class IRCConnection
 		catch(IOException ee)
 		{
 		}
-		receiver.interrupt();
-		sender.interrupt();
 
-		receiver = null;
 		sender = null;
+		receiver = null;
 
-		server.onError(e);
+		new Handler(Looper.getMainLooper()).post(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				server.onError(e);
+			}
+		});
+	}
+
+	public void disconnect()
+	{
+		hadError.set(true);
+
+		sender.interrupt();
+		if(receiver != null)
+			receiver.interrupt();
+
+		try
+		{
+			socket.close();
+		}
+		catch(IOException ee)
+		{
+		}
+
+		sender = null;
+		receiver = null;
 	}
 
 	public void send(IRCMessage msg)

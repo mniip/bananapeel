@@ -35,6 +35,8 @@ public class IRCServer
 
 	public void connect(String host, int port)
 	{
+		if(connection != null)
+			connection.disconnect();
 		connection = new IRCConnection(this);
 		connection.connect(host, port);
 	}

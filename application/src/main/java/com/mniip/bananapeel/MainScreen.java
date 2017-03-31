@@ -120,12 +120,28 @@ public class MainScreen extends FragmentActivity
 			return getService().getFrontTab().nickList.get(position).hashCode();
 		}
 
-		@Override
-		public View getView(int position, View reuse, ViewGroup parent)
+		class ViewHolder //not-static
 		{
-			TextView view = (TextView)LayoutInflater.from(parent.getContext()).inflate(R.layout.nick_line, parent, false);
-			view.setText(getService().getFrontTab().nickList.get(position));
-			return view;
+			TextView txtLine;
+		}
+
+		@Override
+		public View getView(int position, View convertView, ViewGroup parent)
+		{
+			ViewHolder viewHolder;
+
+			if(convertView == null)
+			{
+				convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.nick_line, parent, false);
+
+				viewHolder = new ViewHolder();
+				viewHolder.txtLine = (TextView)convertView;
+				convertView.setTag(viewHolder);
+			}
+			else
+				viewHolder = (ViewHolder)convertView.getTag();
+			viewHolder.txtLine.setText(getService().getFrontTab().nickList.get(position));
+			return convertView;
 		}
 
 		public void onTabNickListChanged(int tabId)

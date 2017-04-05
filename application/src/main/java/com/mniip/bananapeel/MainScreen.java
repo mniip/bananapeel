@@ -140,7 +140,16 @@ public class MainScreen extends FragmentActivity
 			}
 			else
 				viewHolder = (ViewHolder)convertView.getTag();
-			viewHolder.txtLine.setText(getService().getFrontTab().nickList.get(position));
+			String status = "";
+			Tab tab = getService().getFrontTab();
+			NickListEntry entry = tab.nickList.get(position);
+			for(Character stat : tab.getServerTab().server.statusChars)
+				if(entry.status.contains(stat))
+				{
+					status = stat.toString();
+					break;
+				}
+			viewHolder.txtLine.setText(status + entry.nick);
 			return convertView;
 		}
 

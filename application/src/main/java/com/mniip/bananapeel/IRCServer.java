@@ -6,6 +6,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class IRCServer
 {
@@ -15,6 +18,7 @@ public class IRCServer
 
 	private boolean registered = false;
 	public String ourNick = "";
+	public ArrayList<Character> statusChars = new ArrayList<>(Arrays.asList('@', '+'));
 	private ArrayList<String> waitingNames = new ArrayList<>();
 
 	public IRCServer(IRCService srv, ServerTab sTab)
@@ -72,6 +76,20 @@ public class IRCServer
 		{
 			registered = true;
 		}
+	}
+
+	public int compareStatuses(NickListEntry a, NickListEntry b)
+	{
+		for(Character stat : statusChars)
+			if(a.status.contains(stat))
+				if(b.status.contains(stat))
+					return 0;
+				else
+					return 1;
+			else
+				if(b.status.contains(stat))
+					return -1;
+		return 0;
 	}
 
 	public static class IRCCommandHandler
@@ -140,9 +158,24 @@ public class IRCServer
 				{
 					for(String nick : names.split(" "))
 					{
-						while(nick.length() > 0 && (nick.charAt(0) == '@' || nick.charAt(0) == '+'))
+						NickListEntry entry = new NickListEntry();
+						while(nick.length() > 0 && srv.statusChars.contains(nick.charAt(0)))
+						{
+							entry.status.add(nick.charAt(0));
 							nick = nick.substring(1);
-						tab.nickList.add(nick);
+						}
+						entry.nick = nick;
+						int i;
+						for(i = 0; i < tab.nickList.size(); i++)
+						{
+							int result = srv.compareStatuses(tab.nickList.get(i), entry);
+							if(result > 0)
+								continue;
+							if(result == 0 && entry.nick.compareToIgnoreCase(tab.nickList.get(i).nick) > 0)
+								continue;
+							break;
+						}
+						tab.nickList.add(i, entry);
 						srv.getService().changeNickList(tab);
 					}
 					return;
@@ -184,7 +217,18 @@ public class IRCServer
 				tab = srv.getService().findTab(srv.getTab(), channel);
 				if(tab != null)
 				{
-					tab.nickList.add(nick);
+					NickListEntry entry = new NickListEntry(nick);
+					int i;
+					for(i = 0; i < tab.nickList.size(); i++)
+					{
+						int result = srv.compareStatuses(tab.nickList.get(i), entry);
+						if(result > 0)
+							continue;
+						if(result == 0 && entry.nick.compareToIgnoreCase(tab.nickList.get(i).nick) > 0)
+							continue;
+						break;
+					}
+					tab.nickList.add(i, entry);
 					srv.getService().changeNickList(tab);
 				}
 			}
@@ -200,13 +244,13 @@ public class IRCServer
 			if(from.equals(srv.ourNick))
 				srv.ourNick = to;
 			for(Tab tab : srv.getService().tabs)
-				if(tab.nickList.contains(from))
-				{
-					tab.nickList.remove(from);
-					tab.nickList.add(to);
-					srv.getService().changeNickList(tab);
-					tab.putLine("* " + from + " changed nick to " + to);
-				}
+				for(NickListEntry entry : tab.nickList)
+					if(entry.nick.equals(from))
+					{
+						entry.nick = to;
+						srv.getService().changeNickList(tab);
+						tab.putLine("* " + from + " changed nick to " + to);
+					}
 		}
 
 		@Hook(command = "PART", minParams = 1, requireSource = true)
@@ -224,9 +268,21 @@ public class IRCServer
 			else
 				if(tab != null)
 				{
+					boolean found = false;
+					for(int i = 0; i < tab.nickList.size(); )
+						if(tab.nickList.get(i).nick.equals(nick))
+						{
+							tab.nickList.remove(i);
+							found = true;
+						}
+						else
+							i++;
 					tab.nickList.remove(nick);
-					srv.getService().changeNickList(tab);
-					tab.putLine("* " + nick + " left " + channel + (reason == null ? "" : " (" + reason + ")"));
+					if(found)
+					{
+						srv.getService().changeNickList(tab);
+						tab.putLine("* " + nick + " left " + channel + (reason == null ? "" : " (" + reason + ")"));
+					}
 				}
 		}
 

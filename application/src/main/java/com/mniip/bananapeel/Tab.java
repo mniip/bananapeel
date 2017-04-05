@@ -8,7 +8,7 @@ public class Tab
 	private IRCService service;
 	private int id;
 	private String title;
-	public ArrayList<String> nickList = new ArrayList<>();
+	public ArrayList<NickListEntry> nickList = new ArrayList<>();
 	private ArrayList<String> textLines = new ArrayList<>();
 
 	public Tab(IRCService s, ServerTab sTab, int tabId, String ttl)

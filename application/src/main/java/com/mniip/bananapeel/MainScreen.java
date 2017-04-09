@@ -7,10 +7,8 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -118,28 +116,14 @@ public class MainScreen extends FragmentActivity
 			return getService().getFrontTab().nickList.get(position).hashCode();
 		}
 
-		class ViewHolder //not-static
-		{
-			TextView txtLine;
-		}
-
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent)
 		{
-			ViewHolder viewHolder;
-
 			if(convertView == null)
-			{
 				convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.nick_line, parent, false);
 
-				viewHolder = new ViewHolder();
-				viewHolder.txtLine = (TextView)convertView;
-				convertView.setTag(viewHolder);
-			}
-			else
-				viewHolder = (ViewHolder)convertView.getTag();
 			NickListEntry entry = getService().getFrontTab().nickList.get(position);
-			viewHolder.txtLine.setText((entry.highestStatus == null ? "" : entry.highestStatus.toString()) + entry.nick);
+			((TextView)convertView).setText((entry.highestStatus == null ? "" : entry.highestStatus.toString()) + entry.nick);
 			return convertView;
 		}
 
@@ -162,9 +146,19 @@ public class MainScreen extends FragmentActivity
 
 		setContentView(R.layout.main_screen);
 
+		int width = getResources().getDisplayMetrics().widthPixels/2;
+
+		ListView serverList = (ListView)findViewById(R.id.server_list);
+		DrawerLayout.LayoutParams sParams = (DrawerLayout.LayoutParams) serverList.getLayoutParams();// android.support.v4.widget.
+		sParams.width = width;
+		serverList.setLayoutParams(sParams);
+
 		ListView nickList = (ListView)findViewById(R.id.nick_list);
 		nickListAdapter = new NickListAdapter();
 		nickList.setAdapter(nickListAdapter);
+		DrawerLayout.LayoutParams Nparams = (DrawerLayout.LayoutParams) nickList.getLayoutParams();// android.support.v4.widget.
+		Nparams.width = width;
+		nickList.setLayoutParams(Nparams);
 
 		ViewPager pager = (ViewPager)findViewById(R.id.view_pager);
 		tabAdapter = new TabAdapter(getSupportFragmentManager(), this);

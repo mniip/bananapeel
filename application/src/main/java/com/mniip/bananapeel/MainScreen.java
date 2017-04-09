@@ -21,8 +21,6 @@ import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import java.util.ArrayList;
-
 public class MainScreen extends FragmentActivity
 {
 	private TabAdapter tabAdapter;
@@ -140,16 +138,8 @@ public class MainScreen extends FragmentActivity
 			}
 			else
 				viewHolder = (ViewHolder)convertView.getTag();
-			String status = "";
-			Tab tab = getService().getFrontTab();
-			NickListEntry entry = tab.nickList.get(position);
-			for(Character stat : tab.getServerTab().server.statusChars)
-				if(entry.status.contains(stat))
-				{
-					status = stat.toString();
-					break;
-				}
-			viewHolder.txtLine.setText(status + entry.nick);
+			NickListEntry entry = getService().getFrontTab().nickList.get(position);
+			viewHolder.txtLine.setText((entry.highestStatus == null ? "" : entry.highestStatus.toString()) + entry.nick);
 			return convertView;
 		}
 

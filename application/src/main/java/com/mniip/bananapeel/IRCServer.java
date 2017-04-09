@@ -5,8 +5,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -18,8 +21,33 @@ public class IRCServer
 
 	private boolean registered = false;
 	public String ourNick = "";
-	public ArrayList<Character> statusChars = new ArrayList<>(Arrays.asList('@', '+'));
-	private ArrayList<String> waitingNames = new ArrayList<>();
+	public List<Character> statusChars = new ArrayList<>(Arrays.asList('@', '+'));
+	public List<Character> statusModes = new ArrayList<>(Arrays.asList('o', 'v'));
+	public Set<Character> listModes = new TreeSet<>(Arrays.asList('b', 'e', 'I'));
+	public Set<Character> alwaysArgumentModes = new TreeSet<>(Arrays.asList('k'));
+	public Set<Character> setArgumentModes = new TreeSet<>(Arrays.asList('f', 'l', 'j'));
+	public Set<Character> noArgumentModes = new TreeSet<>(Arrays.asList('i', 'm', 'n', 's', 't'));
+	private List<String> waitingNames = new ArrayList<>();
+
+	private static class ComposedComparator<T> implements Comparator<T>
+	{
+		Comparator<T> x, y;
+
+		public ComposedComparator(Comparator<T> x, Comparator<T> y)
+		{
+			this.x = x;
+			this.y = y;
+		}
+
+		@Override
+		public int compare(T a, T b)
+		{
+			int result = x.compare(a, b);
+			if(result == 0)
+				return y.compare(a, b);
+			return result;
+		}
+	}
 
 	public IRCServer(IRCService srv, ServerTab sTab)
 	{
@@ -78,18 +106,18 @@ public class IRCServer
 		}
 	}
 
-	public int compareStatuses(NickListEntry a, NickListEntry b)
+	private Collator nickCollator = Collators.rfc1459();
+	private Comparator<NickListEntry> nickListEntryComparator = new ComposedComparator<>(NickListEntry.statusComparator(statusChars), NickListEntry.nickComparator(nickCollator));
+
+	private void updateComparator()
 	{
-		for(Character stat : statusChars)
-			if(a.status.contains(stat))
-				if(b.status.contains(stat))
-					return 0;
-				else
-					return 1;
-			else
-				if(b.status.contains(stat))
-					return -1;
-		return 0;
+		nickListEntryComparator = new ComposedComparator<>(NickListEntry.statusComparator(statusChars), NickListEntry.nickComparator(nickCollator));
+		for(Tab tab : service.tabs)
+			if(tab.getServerTab().server == this)
+			{
+				tab.nickList.setComparator(nickListEntryComparator);
+				service.changeNickList(tab);
+			}
 	}
 
 	public static class IRCCommandHandler
@@ -164,20 +192,11 @@ public class IRCServer
 							entry.status.add(nick.charAt(0));
 							nick = nick.substring(1);
 						}
+						entry.updateStatus(srv);
 						entry.nick = nick;
-						int i;
-						for(i = 0; i < tab.nickList.size(); i++)
-						{
-							int result = srv.compareStatuses(tab.nickList.get(i), entry);
-							if(result > 0)
-								continue;
-							if(result == 0 && entry.nick.compareToIgnoreCase(tab.nickList.get(i).nick) > 0)
-								continue;
-							break;
-						}
-						tab.nickList.add(i, entry);
-						srv.getService().changeNickList(tab);
+						tab.nickList.addOrdered(entry);
 					}
+					srv.getService().changeNickList(tab);
 					return;
 				}
 			}
@@ -210,6 +229,7 @@ public class IRCServer
 			if(nick.equals(srv.ourNick))
 			{
 				tab = srv.getService().createTab(srv.getTab(), channel);
+				tab.nickList.setComparator(srv.nickListEntryComparator);
 				srv.waitingNames.add(channel);
 			}
 			else
@@ -217,23 +237,65 @@ public class IRCServer
 				tab = srv.getService().findTab(srv.getTab(), channel);
 				if(tab != null)
 				{
-					NickListEntry entry = new NickListEntry(nick);
-					int i;
-					for(i = 0; i < tab.nickList.size(); i++)
-					{
-						int result = srv.compareStatuses(tab.nickList.get(i), entry);
-						if(result > 0)
-							continue;
-						if(result == 0 && entry.nick.compareToIgnoreCase(tab.nickList.get(i).nick) > 0)
-							continue;
-						break;
-					}
-					tab.nickList.add(i, entry);
+					tab.nickList.addOrdered(new NickListEntry(nick));
 					srv.getService().changeNickList(tab);
 				}
 			}
 			if(tab != null)
 				tab.putLine("* " + nick + " joined " + channel);
+		}
+
+		@Hook(command = "MODE", minParams = 2, requireSource = true)
+		private static void onMode(IRCServer srv, IRCMessage msg)
+		{
+			String from = msg.getNick();
+			String channel = msg.args[0];
+			String mode = msg.args[1];
+			Tab tab = srv.getService().findTab(srv.getTab(), channel);
+			if(tab != null)
+			{
+				boolean changed = false;
+				int argument = 2;
+				boolean set = true;
+				for(int i = 0; i < mode.length(); i++)
+				{
+					char ch = mode.charAt(i);
+					if(ch == '+')
+						set = true;
+					else if(ch == '-')
+						set = false;
+					else if(srv.statusModes.contains(ch) && argument < msg.args.length)
+					{
+						char status = srv.statusChars.get(srv.statusModes.indexOf(ch));
+						String target = msg.args[argument++];
+						for(int j = 0; j < tab.nickList.size(); j++)
+						{
+							NickListEntry entry = tab.nickList.get(j);
+							if(entry.nick.equals(target))
+							{
+								if(set)
+									entry.status.add(status);
+								else
+									entry.status.remove(status);
+								entry.updateStatus(srv);
+								tab.nickList.setOrdered(j, entry);
+								changed = true;
+								break;
+							}
+						}
+					}
+					else if(srv.alwaysArgumentModes.contains(ch) || srv.listModes.contains(ch))
+						argument++;
+					else if(srv.setArgumentModes.contains(ch))
+						argument += set ? 1 : 0;
+				}
+				String modes = mode;
+				for(int i = 2; i < msg.args.length; i++)
+					modes += " " + msg.args[i];
+				tab.putLine("* " + from + " set mode " + modes);
+				if(changed)
+					srv.getService().changeNickList(tab);
+			}
 		}
 
 		@Hook(command = "NICK", minParams = 1, requireSource = true)
@@ -244,13 +306,18 @@ public class IRCServer
 			if(from.equals(srv.ourNick))
 				srv.ourNick = to;
 			for(Tab tab : srv.getService().tabs)
-				for(NickListEntry entry : tab.nickList)
+				for(int i = 0; i < tab.nickList.size(); i++)
+				{
+					NickListEntry entry = tab.nickList.get(i);
 					if(entry.nick.equals(from))
 					{
 						entry.nick = to;
+						tab.nickList.setOrdered(i, entry);
 						srv.getService().changeNickList(tab);
 						tab.putLine("* " + from + " changed nick to " + to);
+						break;
 					}
+				}
 		}
 
 		@Hook(command = "PART", minParams = 1, requireSource = true)
@@ -277,7 +344,6 @@ public class IRCServer
 						}
 						else
 							i++;
-					tab.nickList.remove(nick);
 					if(found)
 					{
 						srv.getService().changeNickList(tab);
@@ -304,14 +370,12 @@ public class IRCServer
 				if(tab == null)
 					tab = srv.getService().createTab(srv.getTab(), nick);
 				tab.putLine("<" + nick + "> " + text);
-				return;
 			}
 			else
 			{
 				Tab tab = srv.getService().findTab(srv.getTab(), target);
 				if(tab != null)
 					tab.putLine("<" + nick + "> " + text);
-				return;
 			}
 		}
 
@@ -321,12 +385,22 @@ public class IRCServer
 			String nick = msg.getNick();
 			String reason = msg.args.length >= 1 ? msg.args[0] : null;
 			for(Tab tab : srv.getService().tabs)
-				if(tab.nickList.contains(nick))
+			{
+				boolean found = false;
+				for(int i = 0; i < tab.nickList.size(); )
+					if(tab.nickList.get(i).nick.equals(nick))
+					{
+						tab.nickList.remove(i);
+						found = true;
+					}
+					else
+						i++;
+				if(found)
 				{
-					tab.nickList.remove(nick);
 					srv.getService().changeNickList(tab);
 					tab.putLine("* " + nick + " quit" + (reason == null ? "" : " (" + reason + ")"));
 				}
+			}
 		}
 
 		private static void handleUnhandled(IRCServer srv, IRCMessage msg)

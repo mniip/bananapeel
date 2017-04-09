@@ -13,20 +13,8 @@
         <LinearLayout
             android:orientation="vertical"
             android:layout_width="match_parent"
+            android:id="@+id/pager_container"
             android:layout_height="match_parent">
-
-            <android.support.v4.view.ViewPager
-                android:layout_width="match_parent"
-                android:id="@+id/view_pager"
-                android:layout_height="match_parent"
-                android:visibility="visible">
-
-                <android.support.v4.view.PagerTabStrip android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/pager_tab_strip">
-                </android.support.v4.view.PagerTabStrip>
-
-            </android.support.v4.view.ViewPager>
 
         </LinearLayout>
 

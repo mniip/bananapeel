@@ -23,11 +23,12 @@ public class TabAdapter extends PagerAdapter
     private final FragmentManager fragmentManager;
     private FragmentTransaction curTransaction;
 
-    public TabAdapter(FragmentManager fm, MainScreen mScreen)
+    public TabAdapter(FragmentManager fm, MainScreen mScreen, IRCService service)
     {
         super();
         fragmentManager = fm;
         mainScreen = mScreen;
+        setService(service);
     }
 
     public boolean isViewFromObject(View view, Object object)
@@ -53,6 +54,7 @@ public class TabAdapter extends PagerAdapter
             if(curTransaction == null)
                 curTransaction = fragmentManager.beginTransaction();
             curTransaction.add(container.getId(), fragment);
+            tabFragments.put(tabId, fragment);
         }
         return fragment;
     }
@@ -63,12 +65,12 @@ public class TabAdapter extends PagerAdapter
         if(object instanceof Fragment)
         {
             TabFragment fragment = (TabFragment)object;
-
             if(curTransaction == null)
                 curTransaction = fragmentManager.beginTransaction();
             if(fragment.isActive())
                 savedStates.set(position, fragment.isAdded() ? fragmentManager.saveFragmentInstanceState(fragment) : null);
             curTransaction.remove(fragment);
+            tabFragments.remove(fragment.getTabId());
         }
     }
 
@@ -104,25 +106,14 @@ public class TabAdapter extends PagerAdapter
         }
     }
 
-    public void setService(IRCService s)
+    private void setService(IRCService s)
     {
-        Log.d("Bananan","@@@@@");
         service = s;
         tabPositions.clear();
         tabIds.clear();
 
         for(IntMap.KV<Tab> kv : service.tabs.pairs())
             onTabAdded(kv.getKey());
-    }
-
-    public void onTabViewCreated(TabFragment view, int tabId)
-    {
-        tabFragments.put(tabId, view);
-    }
-
-    public void onTabViewDestroyed(int tabId)
-    {
-        tabFragments.delete(tabId);
     }
 
     public void onTabLinesAdded(int tabId)

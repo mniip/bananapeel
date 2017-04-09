@@ -83,7 +83,13 @@ public class MainScreen extends FragmentActivity
 		public void onServiceConnected(ComponentName cls, IBinder binder)
 		{
 			getService().setListener(ircInterfaceListener);
-			tabAdapter.setService(getService());
+
+			ViewGroup group = (ViewGroup)findViewById(R.id.pager_container);
+			LayoutInflater.from(MainScreen.this).inflate(R.layout.pager, group, true);
+
+			ViewPager pager = (ViewPager)group.findViewById(R.id.view_pager);
+			tabAdapter = new TabAdapter(getSupportFragmentManager(), MainScreen.this, getService());
+			pager.setAdapter(tabAdapter);
 		}
 
 		@Override
@@ -159,10 +165,6 @@ public class MainScreen extends FragmentActivity
 		DrawerLayout.LayoutParams Nparams = (DrawerLayout.LayoutParams) nickList.getLayoutParams();// android.support.v4.widget.
 		Nparams.width = width;
 		nickList.setLayoutParams(Nparams);
-
-		tabAdapter = new TabAdapter(getSupportFragmentManager(), MainScreen.this);
-		ViewPager pager = (ViewPager)findViewById(R.id.view_pager);
-		pager.setAdapter(tabAdapter);
 	}
 
 	@Override

@@ -1,4 +1,4 @@
-package com.mniip.bananapeel;
+package com.mniip.bananapeel.ui;
 
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
@@ -12,6 +12,9 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.support.v7.widget.RecyclerView;
 import android.widget.TextView;
+
+import com.mniip.bananapeel.R;
+import com.mniip.bananapeel.ServiceApplication;
 
 public class TabFragment extends Fragment
 {

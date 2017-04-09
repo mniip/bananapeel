@@ -1,4 +1,4 @@
-package com.mniip.bananapeel;
+package com.mniip.bananapeel.util;
 
 import java.text.Collator;
 import java.text.ParseException;

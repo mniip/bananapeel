@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.mniip.bananapeel.MainScreen">
+    tools:context="com.mniip.bananapeel.ui.MainScreen">
 
     <android.support.v4.widget.DrawerLayout
         android:layout_height="match_parent"

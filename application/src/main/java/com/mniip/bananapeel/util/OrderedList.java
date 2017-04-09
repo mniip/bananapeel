@@ -1,4 +1,4 @@
-package com.mniip.bananapeel;
+package com.mniip.bananapeel.util;
 
 import java.util.ArrayList;
 import java.util.Collection;

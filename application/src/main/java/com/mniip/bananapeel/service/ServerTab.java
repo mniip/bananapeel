@@ -1,4 +1,4 @@
-package com.mniip.bananapeel;
+package com.mniip.bananapeel.service;
 
 public class ServerTab extends Tab
 {

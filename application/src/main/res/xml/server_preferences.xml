@@ -5,7 +5,7 @@
         android:key="host"
         android:title="Server hostname" />
 
-    <com.mniip.bananapeel.EditIntPreference
+    <com.mniip.bananapeel.ui.EditIntPreference
         android:key="port"
         android:title="Server port"
         android:inputType="number"

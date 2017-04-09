@@ -1,4 +1,4 @@
-package com.mniip.bananapeel;
+package com.mniip.bananapeel.ui;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -11,6 +11,9 @@ import android.text.InputType;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.EditText;
+
+import com.mniip.bananapeel.service.IRCPreferences;
+import com.mniip.bananapeel.service.IRCServerPreferences;
 
 import java.util.Collections;
 import java.util.List;

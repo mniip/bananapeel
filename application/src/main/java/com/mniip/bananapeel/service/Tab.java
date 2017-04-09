@@ -1,4 +1,9 @@
-package com.mniip.bananapeel;
+package com.mniip.bananapeel.service;
+
+import com.mniip.bananapeel.ui.IRCInterfaceListener;
+import com.mniip.bananapeel.util.Collators;
+import com.mniip.bananapeel.util.NickListEntry;
+import com.mniip.bananapeel.util.OrderedList;
 
 import java.util.ArrayList;
 

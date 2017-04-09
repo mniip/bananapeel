@@ -1,4 +1,4 @@
-package com.mniip.bananapeel;
+package com.mniip.bananapeel.service;
 
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -8,6 +8,13 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+
+import com.mniip.bananapeel.R;
+import com.mniip.bananapeel.ServiceApplication;
+import com.mniip.bananapeel.ui.MainScreen;
+import com.mniip.bananapeel.ui.IRCInterfaceListener;
+import com.mniip.bananapeel.util.IRCMessage;
+import com.mniip.bananapeel.util.IntMap;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -71,7 +78,7 @@ public class IRCService extends Service
 	@Override
 	public IBinder onBind(Intent i) { return new Binder(); }
 
-	IntMap<Tab> tabs = new IntMap<>();
+	public IntMap<Tab> tabs = new IntMap<>();
 	private int unusedTabId = 0;
 
 	public ServerTab createServerTab()

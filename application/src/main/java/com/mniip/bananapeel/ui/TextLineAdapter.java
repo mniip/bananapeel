@@ -1,13 +1,16 @@
-package com.mniip.bananapeel;
+package com.mniip.bananapeel.ui;
 
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.mniip.bananapeel.R;
+import com.mniip.bananapeel.ServiceApplication;
+
 import java.util.ArrayList;
 
-class TextLineAdapter extends RecyclerView.Adapter<TextLineAdapter.ViewHolder>
+public class TextLineAdapter extends RecyclerView.Adapter<TextLineAdapter.ViewHolder>
 {
     private int tabId;
     private ArrayList<String> textLines;

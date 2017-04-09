@@ -1,4 +1,8 @@
-package com.mniip.bananapeel;
+package com.mniip.bananapeel.service;
+
+import com.mniip.bananapeel.util.Collators;
+import com.mniip.bananapeel.util.IRCMessage;
+import com.mniip.bananapeel.util.NickListEntry;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;

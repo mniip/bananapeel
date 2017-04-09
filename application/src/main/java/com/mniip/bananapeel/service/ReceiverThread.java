@@ -1,4 +1,6 @@
-package com.mniip.bananapeel;
+package com.mniip.bananapeel.service;
+
+import com.mniip.bananapeel.util.IRCMessage;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

@@ -1,4 +1,6 @@
-package com.mniip.bananapeel;
+package com.mniip.bananapeel.util;
+
+import com.mniip.bananapeel.service.IRCServer;
 
 import java.util.Comparator;
 import java.util.List;

@@ -1,7 +1,9 @@
-package com.mniip.bananapeel;
+package com.mniip.bananapeel.service;
 
 import android.os.Handler;
 import android.os.Looper;
+
+import com.mniip.bananapeel.util.IRCMessage;
 
 import java.io.IOException;
 import java.net.Socket;

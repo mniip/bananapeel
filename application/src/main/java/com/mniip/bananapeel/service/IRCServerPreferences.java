@@ -1,4 +1,4 @@
-package com.mniip.bananapeel;
+package com.mniip.bananapeel.service;
 
 import android.content.Context;
 import android.content.SharedPreferences;

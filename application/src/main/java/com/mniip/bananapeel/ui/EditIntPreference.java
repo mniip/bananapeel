@@ -1,4 +1,4 @@
-package com.mniip.bananapeel;
+package com.mniip.bananapeel.ui;
 
 import android.content.Context;
 import android.preference.EditTextPreference;

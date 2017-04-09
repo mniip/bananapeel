@@ -1,6 +1,5 @@
-package com.mniip.bananapeel;
+package com.mniip.bananapeel.ui;
 
-import android.support.v4.app.Fragment;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -18,6 +17,11 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import com.mniip.bananapeel.service.IRCService;
+import com.mniip.bananapeel.util.NickListEntry;
+import com.mniip.bananapeel.R;
+import com.mniip.bananapeel.ServiceApplication;
 
 public class MainScreen extends FragmentActivity
 {

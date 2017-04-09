@@ -160,8 +160,8 @@ public class MainScreen extends FragmentActivity
 		Nparams.width = width;
 		nickList.setLayoutParams(Nparams);
 
+		tabAdapter = new TabAdapter(getSupportFragmentManager(), MainScreen.this);
 		ViewPager pager = (ViewPager)findViewById(R.id.view_pager);
-		tabAdapter = new TabAdapter(getSupportFragmentManager(), this);
 		pager.setAdapter(tabAdapter);
 	}
 

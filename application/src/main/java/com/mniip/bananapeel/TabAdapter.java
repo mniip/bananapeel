@@ -4,6 +4,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.PagerAdapter;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -31,15 +32,19 @@ public class TabAdapter extends PagerAdapter
 
     public boolean isViewFromObject(View view, Object object)
     {
-        return ((Fragment)object).getView() == view;
+        if(object instanceof Fragment)
+            return ((Fragment)object).getView() == view;
+        else return object == view;
     }
 
     @Override
     public Object instantiateItem(ViewGroup container, int position)
     {
+        if(service == null)
+            return new View(mainScreen);
         int tabId = tabIds.get(position);
         TabFragment fragment = tabFragments.get(tabId);
-        if (fragment == null)
+        if(fragment == null)
         {
             Fragment.SavedState fss = savedStates.get(position);
             fragment = new TabFragment();
@@ -55,26 +60,33 @@ public class TabAdapter extends PagerAdapter
     @Override
     public void destroyItem(ViewGroup container, int position, Object object)
     {
-        TabFragment fragment = (TabFragment)object;
+        if(object instanceof Fragment)
+        {
+            TabFragment fragment = (TabFragment)object;
 
-        if (curTransaction == null)
-            curTransaction = fragmentManager.beginTransaction();
-        if(fragment.isActive())
-            savedStates.set(position, fragment.isAdded() ? fragmentManager.saveFragmentInstanceState(fragment) : null);
-        curTransaction.remove(fragment);
+            if(curTransaction == null)
+                curTransaction = fragmentManager.beginTransaction();
+            if(fragment.isActive())
+                savedStates.set(position, fragment.isAdded() ? fragmentManager.saveFragmentInstanceState(fragment) : null);
+            curTransaction.remove(fragment);
+        }
     }
 
     @Override
     public int getItemPosition(Object object)
     {
-        Integer pos = tabPositions.get(((TabFragment)object).getTabId());
-        return pos == null ? POSITION_NONE : pos;
+        if(object instanceof Fragment)
+        {
+            Integer pos = tabPositions.get(((TabFragment)object).getTabId());
+            return pos == null ? POSITION_NONE : pos;
+        }
+        return service == null ? POSITION_UNCHANGED : POSITION_NONE;
     }
 
     @Override
     public void finishUpdate(ViewGroup container)
     {
-        if (curTransaction != null)
+        if(curTransaction != null)
         {
             curTransaction.commitNowAllowingStateLoss();
             curTransaction = null;
@@ -94,6 +106,7 @@ public class TabAdapter extends PagerAdapter
 
     public void setService(IRCService s)
     {
+        Log.d("Bananan","@@@@@");
         service = s;
         tabPositions.clear();
         tabIds.clear();
@@ -153,7 +166,7 @@ public class TabAdapter extends PagerAdapter
     public void onTabRemoved(int tabId)
     {
         Integer tabPos = tabPositions.get(tabId);
-        if (tabPos != null)
+        if(tabPos != null)
         {
             TabFragment fragment = tabFragments.get(tabId);
             if(fragment != null)
@@ -176,15 +189,21 @@ public class TabAdapter extends PagerAdapter
     @Override
     public String getPageTitle(int position)
     {
+        if(service == null)
+            return mainScreen.getText(R.string.app_name).toString();
         Integer tabId = tabIds.get(position);
-        if (tabId != null)
+        if(tabId != null)
             return service.tabs.get(tabId).getTitle();
-        else return "";
+        else
+            return "";
     }
 
     @Override
     public int getCount()
     {
-        return tabIds.size();
+        if(service == null)
+            return 1;
+        else
+            return tabIds.size();
     }
 }

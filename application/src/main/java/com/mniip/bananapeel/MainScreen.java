@@ -120,26 +120,11 @@ public class MainScreen extends FragmentActivity
 			return getService().getFrontTab().nickList.get(position).hashCode();
 		}
 
-		class ViewHolder //not-static
-		{
-			TextView txtLine;
-		}
-
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent)
 		{
-			ViewHolder viewHolder;
-
 			if(convertView == null)
-			{
 				convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.nick_line, parent, false);
-
-				viewHolder = new ViewHolder();
-				viewHolder.txtLine = (TextView)convertView;
-				convertView.setTag(viewHolder);
-			}
-			else
-				viewHolder = (ViewHolder)convertView.getTag();
 			String status = "";
 			Tab tab = getService().getFrontTab();
 			NickListEntry entry = tab.nickList.get(position);
@@ -149,7 +134,7 @@ public class MainScreen extends FragmentActivity
 					status = stat.toString();
 					break;
 				}
-			viewHolder.txtLine.setText(status + entry.nick);
+			((TextView)convertView).setText(status + entry.nick);
 			return convertView;
 		}
 

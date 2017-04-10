@@ -3,6 +3,7 @@ package com.mniip.bananapeel.ui;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -87,12 +88,14 @@ public class TabFragment extends Fragment
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event)
             {
-                if(actionId == EditorInfo.IME_ACTION_SEND)
+                if(actionId == EditorInfo.IME_ACTION_SEND ||
+                        event != null &&
+                                event.getKeyCode() == KeyEvent.KEYCODE_ENTER &&
+                                event.getAction() == KeyEvent.ACTION_DOWN)
                 {
                     sendInput(v);
                     return true;
                 }
-                else
                     return false;
             }
         });

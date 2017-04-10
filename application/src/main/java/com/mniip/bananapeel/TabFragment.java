@@ -3,6 +3,7 @@ package com.mniip.bananapeel;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -45,6 +46,7 @@ public class TabFragment extends Fragment
     @Override
     public void onSaveInstanceState(Bundle out)
     {
+        Log.d("BananaPell","fragment.onSaveInstanceState");
         super.onSaveInstanceState(out);
         out.putInt("tabId", tabId);
     }
@@ -54,6 +56,7 @@ public class TabFragment extends Fragment
     {
         if(savedInstanceState != null)
         {
+            Log.d("BananaPell","fragment.createFromSavedInstanceState");
             tabId = savedInstanceState.getInt("tabId");
             sticky = savedInstanceState.getBoolean("sticky");
         }

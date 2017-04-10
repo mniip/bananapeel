@@ -177,6 +177,15 @@ public class MainScreen extends FragmentActivity
 	}
 
 	@Override
+	public void onSaveInstanceState(Bundle savedInstanceState)
+	{
+		ViewGroup group = (ViewGroup)findViewById(R.id.pager_container);
+		ViewPager pager = (ViewPager)group.findViewById(R.id.view_pager);
+		savedInstanceState.putParcelable(Integer.toString(R.id.view_pager),pager.onSaveInstanceState());
+	}
+
+
+	@Override
 	public boolean onCreateOptionsMenu(Menu menu)
 	{
 		getMenuInflater().inflate(R.xml.main_screen_menu, menu);

@@ -9,10 +9,10 @@ public class IntMap<E> extends SparseArray<E> implements Iterable<E>
 		private IntMap<E> parent;
 		private int index;
 
-		private KV(IntMap<E> p, int i)
+		private KV(IntMap<E> parent, int index)
 		{
-			parent = p;
-			index = i;
+			this.parent = parent;
+			this.index = index;
 		}
 
 		public int getKey()
@@ -32,13 +32,12 @@ public class IntMap<E> extends SparseArray<E> implements Iterable<E>
 
 		private static class Iterator<E> implements java.util.Iterator<KV<E>>
 		{
-			private int index;
+			private int index = 0;
 			private IntMap<E> parent;
 
-			private Iterator(IntMap<E> p)
+			private Iterator(IntMap<E> parent)
 			{
-				index = 0;
-				parent = p;
+				this.parent = parent;
 			}
 
 			@Override
@@ -57,13 +56,12 @@ public class IntMap<E> extends SparseArray<E> implements Iterable<E>
 
 	private static class Iterator<E> implements java.util.Iterator<E>
 	{
-		private int index;
+		private int index = 0;
 		private IntMap<E> parent;
 
-		private Iterator(IntMap<E> p)
+		private Iterator(IntMap<E> parent)
 		{
-			index = 0;
-			parent = p;
+			this.parent = parent;
 		}
 
 		@Override
@@ -89,9 +87,9 @@ public class IntMap<E> extends SparseArray<E> implements Iterable<E>
 	{
 		private IntMap<E> parent;
 
-		private Pairs(IntMap<E> p)
+		private Pairs(IntMap<E> parent)
 		{
-			parent = p;
+			this.parent = parent;
 		}
 
 		@Override

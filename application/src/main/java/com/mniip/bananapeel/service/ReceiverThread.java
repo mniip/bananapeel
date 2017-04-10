@@ -14,11 +14,11 @@ public class ReceiverThread extends Thread
 	private AtomicBoolean hadError;
 	private Socket socket;
 
-	public ReceiverThread(IRCConnection srv, Socket sock, AtomicBoolean error)
+	public ReceiverThread(IRCConnection server, Socket socket, AtomicBoolean hadError)
 	{
-		server = srv;
-		socket = sock;
-		hadError = error;
+		this.server = server;
+		this.socket = socket;
+		this.hadError = hadError;
 	}
 
 	@Override

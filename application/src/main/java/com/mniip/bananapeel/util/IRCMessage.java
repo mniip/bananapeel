@@ -8,9 +8,9 @@ public class IRCMessage
 	{
 		public String text;
 
-		public Source(String txt)
+		public Source(String text)
 		{
-			text = txt;
+			this.text = text;
 		}
 
 		public String getNick()
@@ -65,17 +65,17 @@ public class IRCMessage
 	{
 	}
 
-	public IRCMessage(Source src, String cmd, String... arg)
+	public IRCMessage(Source source, String command, String... args)
 	{
-		source = src;
-		command = cmd;
-		args = arg;
+		this.source = source;
+		this.command = command;
+		this.args = args;
 	}
 
-	public IRCMessage(String cmd, String... arg)
+	public IRCMessage(String command, String... args)
 	{
-		command = cmd;
-		args = arg;
+		this.command = command;
+		this.args = args;
 	}
 
 	public String toIRC()

@@ -19,9 +19,9 @@ public class IRCConnection
 
 	public String ourNick;
 
-	public IRCConnection(IRCServer srv)
+	public IRCConnection(IRCServer server)
 	{
-		server = srv;
+		this.server = server;
 	}
 
 	public IRCServer getServer()

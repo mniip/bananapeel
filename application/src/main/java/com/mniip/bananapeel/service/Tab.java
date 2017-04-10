@@ -16,12 +16,12 @@ public class Tab
 	public OrderedList<NickListEntry> nickList = new OrderedList<>(NickListEntry.nickComparator(Collators.rfc1459()));
 	private ArrayList<String> textLines = new ArrayList<>();
 
-	public Tab(IRCService s, ServerTab sTab, int tabId, String ttl)
+	public Tab(IRCService service, ServerTab serverTab, int id, String title)
 	{
-		service = s;
-		serverTab = sTab;
-		id = tabId;
-		title = ttl;
+		this.service = service;
+		this.serverTab = serverTab;
+		this.id = id;
+		this.title = title;
 	}
 
 	public int getId()
@@ -34,9 +34,9 @@ public class Tab
 		return title;
 	}
 
-	public void setTitle(String t)
+	public void setTitle(String title)
 	{
-		title = t;
+		this.title = title;
 		IRCInterfaceListener listener = service.getListener();
 		if(listener != null)
 			listener.onTabTitleChanged(id);

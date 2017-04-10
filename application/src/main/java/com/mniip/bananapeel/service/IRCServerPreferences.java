@@ -28,11 +28,11 @@ public class IRCServerPreferences
 		e.apply();
 	}
 
-	public IRCServerPreferences(SharedPreferences p, String n)
+	public IRCServerPreferences(SharedPreferences preferences, String name)
 	{
-		name = n;
-		preferences = p;
-		setDefaults(p);
+		this.name = name;
+		this.preferences = preferences;
+		setDefaults(preferences);
 	}
 
 	public String getName()

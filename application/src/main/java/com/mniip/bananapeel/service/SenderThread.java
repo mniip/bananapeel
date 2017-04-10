@@ -18,13 +18,13 @@ public class SenderThread extends Thread
     private String hostname;
     private int port;
 
-    public SenderThread(IRCConnection srv, Socket sock, AtomicBoolean error, String host, int portNum)
+    public SenderThread(IRCConnection server, Socket socket, AtomicBoolean hadError, String hostname, int port)
     {
-        server = srv;
-        socket = sock;
-        hadError = error;
-        hostname = host;
-        port = portNum;
+        this.server = server;
+        this.socket = socket;
+        this.hadError = hadError;
+        this.hostname = hostname;
+        this.port = port;
     }
 
     @Override

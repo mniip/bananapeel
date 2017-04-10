@@ -4,9 +4,9 @@ public class ServerTab extends Tab
 {
 	public IRCServer server;
 
-	public ServerTab(IRCService srv, int tabId)
+	public ServerTab(IRCService server, int tabId)
 	{
-		super(srv, null, tabId, "");
+		super(server, null, tabId, "");
 		serverTab = this;
 	}
 }

@@ -29,9 +29,9 @@ public class IRCPreferences
 		e.apply();
 	}
 
-	public IRCPreferences(Context ctx)
+	public IRCPreferences(Context context)
 	{
-		context = ctx;
+		this.context = context;
 		preferences = context.getSharedPreferences(PREF_FILE, Context.MODE_PRIVATE);
 		servers = context.getSharedPreferences(IRCServerPreferences.PREF_FILE, Context.MODE_PRIVATE);
 		setDefaults(preferences);

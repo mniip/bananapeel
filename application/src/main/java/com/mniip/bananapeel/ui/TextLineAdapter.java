@@ -16,11 +16,11 @@ public class TextLineAdapter extends RecyclerView.Adapter<TextLineAdapter.ViewHo
     private ArrayList<String> textLines;
     private int lastSize = 0;
 
-    public TextLineAdapter(int id)
+    public TextLineAdapter(int tabId)
     {
         super();
-        tabId = id;
-        textLines = ServiceApplication.getService().tabs.get(id).getTextLines();
+        this.tabId = tabId;
+        textLines = ServiceApplication.getService().tabs.get(tabId).getTextLines();
     }
 
     @Override
@@ -48,10 +48,10 @@ public class TextLineAdapter extends RecyclerView.Adapter<TextLineAdapter.ViewHo
     {
         public TextView view;
 
-        public ViewHolder(TextView v)
+        public ViewHolder(TextView view)
         {
-            super(v);
-            view = v;
+            super(view);
+            this.view = view;
         }
     }
 

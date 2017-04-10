@@ -53,10 +53,10 @@ public class IRCServer
 		}
 	}
 
-	public IRCServer(IRCService srv, ServerTab sTab)
+	public IRCServer(IRCService service, ServerTab serverTab)
 	{
-		service = srv;
-		serverTab = sTab;
+		this.service = service;
+		this.serverTab = serverTab;
 	}
 
 	public IRCService getService()

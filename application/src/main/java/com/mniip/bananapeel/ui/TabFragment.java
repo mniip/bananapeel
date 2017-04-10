@@ -25,9 +25,9 @@ public class TabFragment extends Fragment
     private RecyclerView recycler;
 
 
-    public void setTabId(int id)
+    public void setTabId(int tabId)
     {
-        tabId = id;
+        this.tabId = tabId;
     }
 
     public int getTabId()

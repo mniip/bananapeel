@@ -17,9 +17,9 @@ public class NickListEntry
 	{
 	}
 
-	public NickListEntry(String n)
+	public NickListEntry(String nick)
 	{
-		nick = n;
+		this.nick = nick;
 	}
 
 	public void updateStatus(IRCServer server)

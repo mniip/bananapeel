@@ -26,11 +26,11 @@ public class TabAdapter extends PagerAdapter
     private final FragmentManager fragmentManager;
     private FragmentTransaction curTransaction;
 
-    public TabAdapter(FragmentManager fm, MainScreen mScreen)
+    public TabAdapter(FragmentManager fragmentManager, MainScreen mainScreen)
     {
         super();
-        fragmentManager = fm;
-        mainScreen = mScreen;
+        this.fragmentManager = fragmentManager;
+        this.mainScreen = mainScreen;
     }
 
     public boolean isViewFromObject(View view, Object object)
@@ -96,9 +96,9 @@ public class TabAdapter extends PagerAdapter
         }
     }
 
-    public void setService(IRCService s)
+    public void setService(IRCService service)
     {
-        service = s;
+        this.service = service;
         tabPositions.clear();
         tabIds.clear();
 

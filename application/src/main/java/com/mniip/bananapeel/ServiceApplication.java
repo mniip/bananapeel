@@ -10,9 +10,9 @@ public class ServiceApplication extends Application
 {
 	private static IRCService service;
 
-	public void onServiceStarted(IRCService s)
+	public void onServiceStarted(IRCService service)
 	{
-		service = s;
+		this.service = service;
 	}
 
 	public void onServiceStopped()

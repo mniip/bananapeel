@@ -46,7 +46,7 @@ public class TabFragment extends Fragment
     @Override
     public void onSaveInstanceState(Bundle out)
     {
-        Log.d("BananaPell","fragment.onSaveInstanceState");
+        Log.d("BananaPeel","fragment.onSaveInstanceState");
         super.onSaveInstanceState(out);
         out.putInt("tabId", tabId);
     }
@@ -56,7 +56,6 @@ public class TabFragment extends Fragment
     {
         if(savedInstanceState != null)
         {
-            Log.d("BananaPell","fragment.createFromSavedInstanceState");
             tabId = savedInstanceState.getInt("tabId");
             sticky = savedInstanceState.getBoolean("sticky");
         }

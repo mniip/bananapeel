@@ -89,6 +89,7 @@ public class MainScreen extends FragmentActivity
 
 			ViewPager pager = (ViewPager)group.findViewById(R.id.view_pager);
 			tabAdapter = new TabAdapter(getSupportFragmentManager(), MainScreen.this, getService());
+			pager.onRestoreInstanceState(getIntent().getParcelableExtra(((Integer)R.id.view_pager).toString()));
 			pager.setAdapter(tabAdapter);
 		}
 
@@ -165,6 +166,7 @@ public class MainScreen extends FragmentActivity
 		DrawerLayout.LayoutParams Nparams = (DrawerLayout.LayoutParams) nickList.getLayoutParams();// android.support.v4.widget.
 		Nparams.width = width;
 		nickList.setLayoutParams(Nparams);
+
 	}
 
 	@Override
@@ -179,9 +181,13 @@ public class MainScreen extends FragmentActivity
 	@Override
 	public void onSaveInstanceState(Bundle savedInstanceState)
 	{
-		ViewGroup group = (ViewGroup)findViewById(R.id.pager_container);
-		ViewPager pager = (ViewPager)group.findViewById(R.id.view_pager);
-		savedInstanceState.putParcelable(Integer.toString(R.id.view_pager),pager.onSaveInstanceState());
+		ViewPager pager = (ViewPager)findViewById(R.id.view_pager);
+		if (pager != null)
+		{
+			getIntent().putExtra(((Integer)R.id.view_pager).toString(), pager.onSaveInstanceState());
+		}
+
+		super.onSaveInstanceState(savedInstanceState);
 	}
 
 

@@ -106,7 +106,7 @@ public class TabAdapter extends PagerAdapter
         }
     }
 
-    private void setService(IRCService s)
+    public void setService(IRCService s)
     {
         service = s;
         tabPositions.clear();

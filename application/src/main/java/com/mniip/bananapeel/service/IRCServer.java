@@ -112,6 +112,55 @@ public class IRCServer
 		}
 	}
 
+	private static boolean isMangled(String nick, String orig)
+	{
+		if(nick.length() < orig.length())
+			return false;
+		for(int i = 0; i < nick.length(); i++)
+		{
+			char ch = i < orig.length() ? orig.charAt(i) : '_';
+			if(nick.charAt(i) != ch)
+			{
+				if(!Character.isDigit(nick.charAt(i)))
+					return false;
+				while(i < 9 && i < nick.length() && Character.isDigit(nick.charAt(i)))
+					i++;
+				if(i != 9)
+					return false;
+				return nick.substring(i).equals(i < orig.length() ? orig.substring(i) : "");
+			}
+		}
+		return true;
+	}
+
+	private static String mangle(String nick)
+	{
+		while(nick.length() < 9)
+			nick += '_';
+		int i = 8;
+		while(nick.charAt(i) == '9')
+		{
+			nick = nick.substring(0, i) + '0' + nick.substring(i + 1);
+			i--;
+			if(i < 0)
+				return nick;
+		}
+		nick = nick.substring(0, i) + (char)((Character.isDigit(nick.charAt(i)) ? nick.charAt(i) : '0') + 1) + nick.substring(i + 1);
+		return nick;
+	}
+
+	private String nextNick(String nick)
+	{
+		String defNick = preferences.getNick();
+		String defNickAlt = preferences.getNickAlt();
+
+		if(isMangled(nick, defNickAlt))
+			return mangle(nick);
+		if(nick.equals(defNick))
+			return defNickAlt;
+		return defNick;
+	}
+
 	private Comparator<NickListEntry> nickListEntryComparator = new ComposedComparator<>(NickListEntry.statusComparator(config.statusChars), NickListEntry.nickComparator(config.nickCollator));
 
 	private void updateComparator()
@@ -240,6 +289,17 @@ public class IRCServer
 		private static boolean onMotd(IRCServer srv, IRCMessage msg)
 		{
 			srv.onRegistered();
+			return false;
+		}
+
+		@Hook(command = "433")
+		private static boolean onNickInUse(IRCServer srv, IRCMessage msg)
+		{
+			if(!srv.registered)
+			{
+				srv.ourNick = srv.nextNick(srv.ourNick);
+				srv.send(new IRCMessage("NICK", srv.ourNick));
+			}
 			return false;
 		}
 

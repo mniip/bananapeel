@@ -139,7 +139,7 @@ public abstract class IRCServerPreferences
 		{
 			String nick = preferences.getString(name + PREF_NICK_ALT, "");
 			if(nick.isEmpty())
-				nick = parent.getDefaultNick();
+				nick = parent.getDefaultNickAlt();
 			return nick;
 		}
 

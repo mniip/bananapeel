@@ -1,7 +1,7 @@
 package com.mniip.bananapeel.service;
 
-import com.mniip.bananapeel.util.Collators;
 import com.mniip.bananapeel.util.IRCMessage;
+import com.mniip.bananapeel.util.IRCServerConfig;
 import com.mniip.bananapeel.util.NickListEntry;
 import com.mniip.bananapeel.util.TextEvent;
 
@@ -10,13 +10,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 public class IRCServer
 {
@@ -27,13 +24,9 @@ public class IRCServer
 
 	private boolean registered = false;
 	public String ourNick = "";
-	public List<Character> statusChars = new ArrayList<>(Arrays.asList('@', '+'));
-	public List<Character> statusModes = new ArrayList<>(Arrays.asList('o', 'v'));
-	public Set<Character> listModes = new TreeSet<>(Arrays.asList('b', 'e', 'I'));
-	public Set<Character> alwaysArgumentModes = new TreeSet<>(Arrays.asList('k'));
-	public Set<Character> setArgumentModes = new TreeSet<>(Arrays.asList('f', 'l', 'j'));
-	public Set<Character> noArgumentModes = new TreeSet<>(Arrays.asList('i', 'm', 'n', 's', 't'));
 	private List<String> waitingNames = new ArrayList<>();
+
+	public IRCServerConfig config = IRCServerConfig.rfc1459();
 
 	private static class ComposedComparator<T> implements Comparator<T>
 	{
@@ -119,12 +112,11 @@ public class IRCServer
 		}
 	}
 
-	private Collator nickCollator = Collators.rfc1459();
-	private Comparator<NickListEntry> nickListEntryComparator = new ComposedComparator<>(NickListEntry.statusComparator(statusChars), NickListEntry.nickComparator(nickCollator));
+	private Comparator<NickListEntry> nickListEntryComparator = new ComposedComparator<>(NickListEntry.statusComparator(config.statusChars), NickListEntry.nickComparator(config.nickCollator));
 
 	private void updateComparator()
 	{
-		nickListEntryComparator = new ComposedComparator<>(NickListEntry.statusComparator(statusChars), NickListEntry.nickComparator(nickCollator));
+		nickListEntryComparator = new ComposedComparator<>(NickListEntry.statusComparator(config.statusChars), NickListEntry.nickComparator(config.nickCollator));
 		for(Tab tab : service.tabs)
 			if(tab.getServerTab().server == this)
 			{
@@ -151,7 +143,8 @@ public class IRCServer
 
 		private static boolean matchesHook(Hook hook, IRCMessage msg)
 		{
-			if(!hook.command().equals(msg.command))
+			// Collation in command names?
+			if(!hook.command().equalsIgnoreCase(msg.command))
 				return false;
 			if(hook.requireSource() && msg.source == null)
 				return false;
@@ -194,6 +187,14 @@ public class IRCServer
 			return false;
 		}
 
+		@Hook(command = "005", minParams = 2)
+		private static boolean onISupport(IRCServer srv, IRCMessage msg)
+		{
+			srv.config.parseISupport(Arrays.asList(msg.args).subList(1, msg.args.length - 1));
+			srv.updateComparator();
+			return false;
+		}
+
 		@Hook(command = "353", minParams = 4)
 		private static boolean onNamesList(IRCServer srv, IRCMessage msg)
 		{
@@ -207,7 +208,7 @@ public class IRCServer
 					for(String nick : names.split(" "))
 					{
 						NickListEntry entry = new NickListEntry();
-						while(nick.length() > 0 && srv.statusChars.contains(nick.charAt(0)))
+						while(nick.length() > 0 && srv.config.statusChars.contains(nick.charAt(0)))
 						{
 							entry.status.add(nick.charAt(0));
 							nick = nick.substring(1);
@@ -248,7 +249,7 @@ public class IRCServer
 			String nick = msg.getNick();
 			String channel = msg.args[0];
 			Tab tab;
-			if(nick.equals(srv.ourNick))
+			if(srv.config.nickCollator.equals(nick, srv.ourNick))
 			{
 				tab = srv.getService().createTab(srv.getTab(), channel);
 				tab.nickList.setComparator(srv.nickListEntryComparator);
@@ -277,41 +278,24 @@ public class IRCServer
 			Tab tab = srv.getService().findTab(srv.getTab(), channel);
 			if(tab != null)
 			{
-				boolean changed = false; // TODO: refactor
-				int argument = 2;
-				boolean set = true;
-				for(int i = 0; i < mode.length(); i++)
-				{
-					char ch = mode.charAt(i);
-					if(ch == '+')
-						set = true;
-					else if(ch == '-')
-						set = false;
-					else if(srv.statusModes.contains(ch) && argument < msg.args.length)
-					{
-						char status = srv.statusChars.get(srv.statusModes.indexOf(ch));
-						String target = msg.args[argument++];
+				boolean changed = false;
+				for(IRCServerConfig.Mode m : srv.config.parseModes(mode, Arrays.asList(msg.args).subList(2, msg.args.length)))
+					if(m.isStatus())
 						for(int j = 0; j < tab.nickList.size(); j++)
 						{
 							NickListEntry entry = tab.nickList.get(j);
-							if(entry.nick.equals(target))
+							if(srv.config.nickCollator.equals(entry.nick, m.getArgument()))
 							{
-								if(set)
-									entry.status.add(status);
+								if(m.isSet())
+									entry.status.add(m.getStatus());
 								else
-									entry.status.remove(status);
+									entry.status.remove(m.getStatus());
 								entry.updateStatus(srv);
 								tab.nickList.setOrdered(j, entry);
 								changed = true;
 								break;
 							}
 						}
-					}
-					else if(srv.alwaysArgumentModes.contains(ch) || srv.listModes.contains(ch))
-						argument++;
-					else if(srv.setArgumentModes.contains(ch))
-						argument += set ? 1 : 0;
-				}
 				String modes = mode;
 				for(int i = 2; i < msg.args.length; i++)
 					modes += " " + msg.args[i];
@@ -328,7 +312,7 @@ public class IRCServer
 			String from = msg.getNick();
 			String to = msg.args[0];
 			boolean seen = false;
-			if(from.equals(srv.ourNick))
+			if(srv.config.nickCollator.equals(from, srv.ourNick))
 			{
 				srv.ourNick = to;
 				srv.getTab().putLine(new TextEvent(TextEvent.NICK_CHANGE, from, to));
@@ -338,7 +322,7 @@ public class IRCServer
 				for(int i = 0; i < tab.nickList.size(); i++)
 				{
 					NickListEntry entry = tab.nickList.get(i);
-					if(entry.nick.equals(from))
+					if(srv.config.nickCollator.equals(entry.nick, from))
 					{
 						entry.nick = to;
 						tab.nickList.setOrdered(i, entry);
@@ -358,7 +342,7 @@ public class IRCServer
 			String channel = msg.args[0];
 			String reason = msg.args.length >= 2 ? msg.args[1] : null;
 			Tab tab = srv.getService().findTab(srv.getTab(), channel);
-			if(nick.equals(srv.ourNick))
+			if(srv.config.nickCollator.equals(nick, srv.ourNick))
 			{
 				if(tab != null)
 					srv.getService().deleteTab(tab.getId());
@@ -373,7 +357,7 @@ public class IRCServer
 				{
 					boolean found = false;
 					for(int i = 0; i < tab.nickList.size(); )
-						if(tab.nickList.get(i).nick.equals(nick))
+						if(srv.config.nickCollator.equals(tab.nickList.get(i).nick, nick))
 						{
 							tab.nickList.remove(i);
 							found = true;
@@ -405,7 +389,7 @@ public class IRCServer
 			String nick = msg.getNick();
 			String target = msg.args[0];
 			String text = msg.args[1];
-			if(target.equals(srv.ourNick))
+			if(srv.config.nickCollator.equals(target, srv.ourNick))
 			{
 				Tab tab = srv.getService().findTab(srv.getTab(), nick);
 				if(tab == null)
@@ -432,7 +416,7 @@ public class IRCServer
 			{
 				boolean found = false;
 				for(int i = 0; i < tab.nickList.size(); )
-					if(tab.nickList.get(i).nick.equals(nick))
+					if(srv.config.nickCollator.equals(tab.nickList.get(i).nick, nick))
 					{
 						tab.nickList.remove(i);
 						found = true;

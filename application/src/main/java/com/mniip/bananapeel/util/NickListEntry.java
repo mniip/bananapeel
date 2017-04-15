@@ -25,7 +25,7 @@ public class NickListEntry
 	public void updateStatus(IRCServer server)
 	{
 		highestStatus = null;
-		for(Character stat : server.statusChars)
+		for(Character stat : server.config.statusChars)
 			if(status.contains(stat))
 			{
 				highestStatus = stat;

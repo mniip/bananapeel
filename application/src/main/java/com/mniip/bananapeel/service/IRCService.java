@@ -113,7 +113,7 @@ public class IRCService extends Service
 	public Tab findTab(ServerTab sTab, String title)
 	{
 		for(Tab tab : tabs)
-			if(tab.getServerTab() == sTab && tab.getTitle().equals(title))
+			if(tab.getServerTab() == sTab && tab.getTitle().equalsIgnoreCase(title)) // TODO: casemapping here
 				return tab;
 		return null;
 	}
@@ -211,8 +211,8 @@ public class IRCService extends Service
 			{
 				String server = words.get(1);
 				IRCServerPreferences preferences = tab.getService().preferences.getServer(server);
-				if(preferences != null)
-					preferences = new IRCServerPreferences.Dummy(preferences.getHost(), tab.getService().preferences, words.get(1), 6667);
+				if(preferences == null)
+					preferences = new IRCServerPreferences.Dummy(words.get(1), tab.getService().preferences, words.get(1), 6667);
 				IRCServer srv = tab.getServerTab().server;
 				srv.setPreferences(preferences);
 				srv.connect();

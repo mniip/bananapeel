@@ -17,8 +17,6 @@ public class IRCConnection
 	private SenderThread sender;
 	private AtomicBoolean hadError;
 
-	public String ourNick;
-
 	public IRCConnection(IRCServer server)
 	{
 		this.server = server;

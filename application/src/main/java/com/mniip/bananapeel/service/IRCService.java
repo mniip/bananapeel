@@ -15,6 +15,7 @@ import com.mniip.bananapeel.ui.MainScreen;
 import com.mniip.bananapeel.ui.IRCInterfaceListener;
 import com.mniip.bananapeel.util.IRCMessage;
 import com.mniip.bananapeel.util.IntMap;
+import com.mniip.bananapeel.util.TextEvent;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -147,7 +148,7 @@ public class IRCService extends Service
 				if(t.getServerTab().server != null)
 				{
 					t.getServerTab().server.send(new IRCMessage("PRIVMSG", t.getTitle(), str));
-					t.putLine("<" + t.getServerTab().server.ourNick + "> " + str);
+					t.putLine(new TextEvent(TextEvent.MESSAGE, t.getServerTab().server.ourNick, str));
 				}
 		}
 	}

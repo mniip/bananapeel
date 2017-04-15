@@ -3,6 +3,7 @@ package com.mniip.bananapeel.service;
 import com.mniip.bananapeel.util.Collators;
 import com.mniip.bananapeel.util.IRCMessage;
 import com.mniip.bananapeel.util.NickListEntry;
+import com.mniip.bananapeel.util.TextEvent;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
@@ -97,7 +98,7 @@ public class IRCServer
 
 	public void onError(Exception e)
 	{
-		getTab().putLine(e.toString());
+		getTab().putLine(new TextEvent(TextEvent.ERROR, e.toString()));
 		connection = null;
 		registered = false;
 	}
@@ -246,7 +247,7 @@ public class IRCServer
 				}
 			}
 			if(tab != null)
-				tab.putLine("* " + nick + " joined " + channel);
+				tab.putLine(new TextEvent(TextEvent.JOIN, nick, msg.getUserHost(), channel));
 		}
 
 		@Hook(command = "MODE", minParams = 2, requireSource = true)
@@ -296,7 +297,7 @@ public class IRCServer
 				String modes = mode;
 				for(int i = 2; i < msg.args.length; i++)
 					modes += " " + msg.args[i];
-				tab.putLine("* " + from + " set mode " + modes);
+				tab.putLine(new TextEvent(TextEvent.MODE_CHANGE, from, channel, modes));
 				if(changed)
 					srv.getService().changeNickList(tab);
 			}
@@ -318,7 +319,7 @@ public class IRCServer
 						entry.nick = to;
 						tab.nickList.setOrdered(i, entry);
 						srv.getService().changeNickList(tab);
-						tab.putLine("* " + from + " changed nick to " + to);
+						tab.putLine(new TextEvent(TextEvent.MODE_CHANGE, from, to));
 						break;
 					}
 				}
@@ -335,6 +336,10 @@ public class IRCServer
 			{
 				if(tab != null)
 					srv.getService().deleteTab(tab.getId());
+				if(reason == null)
+					srv.getTab().putLine(new TextEvent(TextEvent.PART, nick, msg.getUserHost(), channel));
+				else
+					srv.getTab().putLine(new TextEvent(TextEvent.PART_WITH_REASON, nick, msg.getUserHost(), channel, reason));
 			}
 			else
 				if(tab != null)
@@ -351,7 +356,10 @@ public class IRCServer
 					if(found)
 					{
 						srv.getService().changeNickList(tab);
-						tab.putLine("* " + nick + " left " + channel + (reason == null ? "" : " (" + reason + ")"));
+						if(reason == null)
+							tab.putLine(new TextEvent(TextEvent.PART, nick, msg.getUserHost(), channel));
+						else
+							tab.putLine(new TextEvent(TextEvent.PART_WITH_REASON, nick, msg.getUserHost(), channel, reason));
 					}
 				}
 		}
@@ -373,13 +381,13 @@ public class IRCServer
 				Tab tab = srv.getService().findTab(srv.getTab(), nick);
 				if(tab == null)
 					tab = srv.getService().createTab(srv.getTab(), nick);
-				tab.putLine("<" + nick + "> " + text);
+				tab.putLine(new TextEvent(TextEvent.MESSAGE, nick, text));
 			}
 			else
 			{
 				Tab tab = srv.getService().findTab(srv.getTab(), target);
 				if(tab != null)
-					tab.putLine("<" + nick + "> " + text);
+					tab.putLine(new TextEvent(TextEvent.MESSAGE, nick, text));
 			}
 		}
 
@@ -402,14 +410,29 @@ public class IRCServer
 				if(found)
 				{
 					srv.getService().changeNickList(tab);
-					tab.putLine("* " + nick + " quit" + (reason == null ? "" : " (" + reason + ")"));
+					if(reason == null)
+						tab.putLine(new TextEvent(TextEvent.QUIT, nick, msg.getUserHost()));
+					else
+						tab.putLine(new TextEvent(TextEvent.QUIT_WITH_REASON, nick, msg.getUserHost(), reason));
 				}
 			}
 		}
 
 		private static void handleUnhandled(IRCServer srv, IRCMessage msg)
 		{
-			srv.getTab().putLine(msg.toIRC());
+			if(msg.command.matches("[0-9]*"))
+			{
+				String args = "";
+				for(int i = 1; i < msg.args.length; i++)
+				{
+					if(i != 1)
+						args += " ";
+					args += msg.args[i];
+				}
+				srv.getTab().putLine(new TextEvent(TextEvent.NUMERIC, msg.command, args));
+			}
+			else
+				srv.getTab().putLine(new TextEvent(TextEvent.RAW, msg.toIRC()));
 		}
 	}
 }

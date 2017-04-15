@@ -39,6 +39,14 @@ public class IRCMessage
 				return null;
 			return text.substring(at + 1);
 		}
+
+		public String getUserHost()
+		{
+			int at = text.indexOf('!');
+			if(at == -1)
+				return null;
+			return text.substring(at + 1);
+		}
 	}
 
 	public Source source;
@@ -59,6 +67,11 @@ public class IRCMessage
 	public String getHost()
 	{
 		return source == null ? null : source.getHost();
+	}
+
+	public String getUserHost()
+	{
+		return source == null ? null : source.getUserHost();
 	}
 
 	public IRCMessage()

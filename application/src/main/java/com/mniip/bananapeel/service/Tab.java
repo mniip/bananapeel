@@ -4,8 +4,10 @@ import com.mniip.bananapeel.ui.IRCInterfaceListener;
 import com.mniip.bananapeel.util.Collators;
 import com.mniip.bananapeel.util.NickListEntry;
 import com.mniip.bananapeel.util.OrderedList;
+import com.mniip.bananapeel.util.TextEvent;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Tab
 {
@@ -14,7 +16,7 @@ public class Tab
 	private int id;
 	private String title;
 	public OrderedList<NickListEntry> nickList = new OrderedList<>(NickListEntry.nickComparator(Collators.rfc1459()));
-	private ArrayList<String> textLines = new ArrayList<>();
+	private List<TextEvent> textLines = new ArrayList<>();
 
 	public Tab(IRCService service, ServerTab serverTab, int id, String title)
 	{
@@ -52,14 +54,14 @@ public class Tab
 		return serverTab;
 	}
 
-	public ArrayList<String> getTextLines()
+	public List<TextEvent> getTextLines()
 	{
 		return textLines;
 	}
 
-	public void putLine(String line)
+	public void putLine(TextEvent event)
 	{
-		textLines.add(line);
+		textLines.add(event);
 		IRCInterfaceListener listener = service.getListener();
 		if(listener != null)
 			listener.onTabLinesAdded(id);

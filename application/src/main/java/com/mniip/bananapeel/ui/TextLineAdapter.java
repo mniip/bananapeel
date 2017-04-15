@@ -7,13 +7,14 @@ import android.widget.TextView;
 
 import com.mniip.bananapeel.R;
 import com.mniip.bananapeel.ServiceApplication;
+import com.mniip.bananapeel.util.TextEvent;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public class TextLineAdapter extends RecyclerView.Adapter<TextLineAdapter.ViewHolder>
 {
     private int tabId;
-    private ArrayList<String> textLines;
+    private List<TextEvent> textLines;
     private int lastSize = 0;
 
     public TextLineAdapter(int tabId)
@@ -34,7 +35,7 @@ public class TextLineAdapter extends RecyclerView.Adapter<TextLineAdapter.ViewHo
     @Override
     public void onBindViewHolder(ViewHolder holder, int lineNum)
     {
-        holder.view.setText(textLines.get(lineNum));
+        holder.view.setText(textLines.get(lineNum).getText());
     }
 
     @Override

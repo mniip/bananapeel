@@ -7,6 +7,7 @@ import android.widget.TextView;
 
 import com.mniip.bananapeel.R;
 import com.mniip.bananapeel.ServiceApplication;
+import com.mniip.bananapeel.util.IRCFormatting;
 import com.mniip.bananapeel.util.TextEvent;
 
 import java.util.List;
@@ -35,7 +36,7 @@ public class TextLineAdapter extends RecyclerView.Adapter<TextLineAdapter.ViewHo
     @Override
     public void onBindViewHolder(ViewHolder holder, int lineNum)
     {
-        holder.view.setText(textLines.get(lineNum).getText());
+        holder.view.setText(IRCFormatting.parse(textLines.get(lineNum).getText()));
     }
 
     @Override

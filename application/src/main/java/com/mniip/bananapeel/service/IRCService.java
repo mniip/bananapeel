@@ -52,7 +52,7 @@ public class IRCService extends Service
 		preferences = new IRCPreferences(this);
 
 		ServerTab tab = createServerTab();
-		tab.server = new IRCServer(this, tab);
+		tab.server = new IRCServer(this, tab, null);
 		frontTab = tab;
 
 		Log.d("BananaPeel", "Service created");
@@ -212,10 +212,10 @@ public class IRCService extends Service
 				String server = words.get(1);
 				IRCServerPreferences preferences = tab.getService().preferences.getServer(server);
 				if(preferences != null)
-					tab.getServerTab().server.connect(preferences.getHost(), preferences.getPort());
-				else
-					tab.getServerTab().server.connect(words.get(1), 6667);
-				tab.getServerTab().setTitle(server);
+					preferences = new IRCServerPreferences.Dummy(preferences.getHost(), tab.getService().preferences, words.get(1), 6667);
+				IRCServer srv = tab.getServerTab().server;
+				srv.setPreferences(preferences);
+				srv.connect();
 			}
 		}
 

@@ -23,6 +23,7 @@ public class IRCServer
 	private IRCService service;
 	private ServerTab serverTab;
 	private IRCConnection connection;
+	private IRCServerPreferences preferences;
 
 	private boolean registered = false;
 	public String ourNick = "";
@@ -54,10 +55,11 @@ public class IRCServer
 		}
 	}
 
-	public IRCServer(IRCService service, ServerTab serverTab)
+	public IRCServer(IRCService service, ServerTab serverTab, IRCServerPreferences preferences)
 	{
 		this.service = service;
 		this.serverTab = serverTab;
+		this.preferences = preferences;
 	}
 
 	public IRCService getService()
@@ -70,12 +72,18 @@ public class IRCServer
 		return serverTab;
 	}
 
-	public void connect(String host, int port)
+	public void setPreferences(IRCServerPreferences preferences)
+	{
+		this.preferences = preferences;
+		serverTab.setTitle(preferences.getName());
+	}
+
+	public void connect()
 	{
 		if(connection != null)
 			connection.disconnect();
 		connection = new IRCConnection(this);
-		connection.connect(host, port);
+		connection.connect(preferences.getHost(), preferences.getPort());
 	}
 
 	public void send(IRCMessage msg)
@@ -91,9 +99,9 @@ public class IRCServer
 
 	public void onConnected()
 	{
-		ourNick = service.preferences.getDefaultNick();
+		ourNick = preferences.getNick();
 		send(new IRCMessage("NICK", ourNick));
-		send(new IRCMessage("USER", service.preferences.getDefaultUser(), "*", "*", service.preferences.getDefaultRealName()));
+		send(new IRCMessage("USER", preferences.getUser(), "*", "*", preferences.getRealName()));
 	}
 
 	public void onError(Exception e)

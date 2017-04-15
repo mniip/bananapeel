@@ -21,7 +21,7 @@ public class ServerPreferencesScreen extends PreferenceActivity implements Share
 
 		server = getIntent().getStringExtra("server");
 
-		getPreferenceManager().setSharedPreferencesName(IRCServerPreferences.PREF_FILE);
+		getPreferenceManager().setSharedPreferencesName(IRCServerPreferences.Concrete.PREF_FILE);
 		getPreferenceManager().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
 
 		addPreferencesFromResource(R.xml.server_preferences);

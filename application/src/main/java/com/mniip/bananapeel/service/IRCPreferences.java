@@ -14,6 +14,7 @@ public class IRCPreferences
 	public static final String PREF_FILE = "main";
 
 	private static final String PREF_DEFAULT_NICK = "defaultNick";
+	private static final String PREF_DEFAULT_NICK_ALT = "defaultNickAlt";
 	private static final String PREF_DEFAULT_USER = "defaultUser";
 	private static final String PREF_DEFAULT_REAL_NAME = "defaultRealName";
 
@@ -22,8 +23,10 @@ public class IRCPreferences
 		SharedPreferences.Editor e = p.edit();
 		if(p.getString(PREF_DEFAULT_NICK, null) == null)
 			e.putString(PREF_DEFAULT_NICK, "BananaPeel");
+		if(p.getString(PREF_DEFAULT_NICK_ALT, null) == null)
+			e.putString(PREF_DEFAULT_NICK_ALT, "BananaPeel_");
 		if(p.getString(PREF_DEFAULT_USER, null) == null)
-			e.putString(PREF_DEFAULT_USER, "irc");
+			e.putString(PREF_DEFAULT_USER, "android");
 		if(p.getString(PREF_DEFAULT_REAL_NAME, null) == null)
 			e.putString(PREF_DEFAULT_REAL_NAME, "Banana Peel");
 		e.apply();
@@ -33,7 +36,7 @@ public class IRCPreferences
 	{
 		this.context = context;
 		preferences = context.getSharedPreferences(PREF_FILE, Context.MODE_PRIVATE);
-		servers = context.getSharedPreferences(IRCServerPreferences.PREF_FILE, Context.MODE_PRIVATE);
+		servers = context.getSharedPreferences(IRCServerPreferences.Concrete.PREF_FILE, Context.MODE_PRIVATE);
 		setDefaults(preferences);
 	}
 
@@ -42,22 +45,27 @@ public class IRCPreferences
 		return IRCServerPreferences.listServers(servers);
 	}
 
-	public IRCServerPreferences getServer(String name)
+	public IRCServerPreferences.Concrete getServer(String name)
 	{
 		if(IRCServerPreferences.hasServer(servers, name))
-			return new IRCServerPreferences(servers, name);
+			return new IRCServerPreferences.Concrete(servers, name, this);
 		else
 			return null;
 	}
 
-	public IRCServerPreferences newServer(String name)
+	public IRCServerPreferences.Concrete newServer(String name)
 	{
-		return new IRCServerPreferences(servers, name);
+		return new IRCServerPreferences.Concrete(servers, name, this);
 	}
 
 	public String getDefaultNick()
 	{
 		return preferences.getString(PREF_DEFAULT_NICK, null);
+	}
+
+	public String getDefaultNickAlt()
+	{
+		return preferences.getString(PREF_DEFAULT_NICK_ALT, null);
 	}
 
 	public String getDefaultUser()

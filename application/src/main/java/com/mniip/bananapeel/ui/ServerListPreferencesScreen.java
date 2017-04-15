@@ -28,7 +28,7 @@ public class ServerListPreferencesScreen extends PreferenceActivity
 	{
 		super.onCreate(savedInstanceState);
 
-		getPreferenceManager().setSharedPreferencesName(IRCServerPreferences.PREF_FILE);
+		getPreferenceManager().setSharedPreferencesName(IRCServerPreferences.Concrete.PREF_FILE);
 		preferences = new IRCPreferences(this);
 
 		setPreferenceScreen(getPreferenceManager().createPreferenceScreen(this));
@@ -53,7 +53,7 @@ public class ServerListPreferencesScreen extends PreferenceActivity
 				Object obj = parent.getItemAtPosition(position);
 				if(obj != null && obj instanceof Preference)
 				{
-					final IRCServerPreferences server = preferences.getServer(((Preference)obj).getTitle().toString());
+					final IRCServerPreferences.Concrete server = preferences.getServer(((Preference)obj).getTitle().toString());
 					AlertDialog.Builder builder = new AlertDialog.Builder(ServerListPreferencesScreen.this);
 					final EditText input = new EditText(ServerListPreferencesScreen.this);
 					input.setInputType(InputType.TYPE_CLASS_TEXT);

@@ -6,14 +6,26 @@ import android.util.AttributeSet;
 
 public class EditIntPreference extends EditTextPreference
 {
-	private int minLimit;
-	private int maxLimit;
+	private int minLimit = Integer.MIN_VALUE;
+	private int maxLimit = Integer.MAX_VALUE;
+
+	public EditIntPreference(Context ctx, AttributeSet set, int defStyleAttrs)
+	{
+		super(ctx, set, defStyleAttrs);
+		minLimit = set.getAttributeIntValue(null, "min", Integer.MIN_VALUE);
+		maxLimit = set.getAttributeIntValue(null, "max", Integer.MAX_VALUE);
+	}
 
 	public EditIntPreference(Context ctx, AttributeSet set)
 	{
 		super(ctx, set);
 		minLimit = set.getAttributeIntValue(null, "min", Integer.MIN_VALUE);
 		maxLimit = set.getAttributeIntValue(null, "max", Integer.MAX_VALUE);
+	}
+
+	public EditIntPreference(Context ctx)
+	{
+		super(ctx);
 	}
 
 	@Override

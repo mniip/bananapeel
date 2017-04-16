@@ -1,5 +1,8 @@
 package com.mniip.bananapeel.service;
 
+import android.os.Handler;
+import android.os.Looper;
+
 import com.mniip.bananapeel.util.IRCMessage;
 import com.mniip.bananapeel.util.IRCServerConfig;
 import com.mniip.bananapeel.util.NickListEntry;
@@ -71,8 +74,35 @@ public class IRCServer
 		serverTab.setTitle(preferences.getName());
 	}
 
+	private static class Reconnect implements Runnable
+	{
+		private boolean cancelled = false;
+		private IRCServer server;
+
+		public Reconnect(IRCServer server)
+		{
+			this.server = server;
+		}
+
+		public void cancel()
+		{
+			cancelled = true;
+		}
+
+		@Override
+		public void run()
+		{
+			if(!cancelled)
+				server.connect();
+		}
+	}
+
+	private Reconnect reconnect = null;
+
 	public void connect()
 	{
+		if(reconnect != null)
+			reconnect.cancel(); // No race condition because it all runs on the main thread
 		if(connection != null)
 			connection.disconnect();
 		connection = new IRCConnection(this);
@@ -92,6 +122,7 @@ public class IRCServer
 
 	public void onConnected()
 	{
+		registered = false;
 		ourNick = preferences.getNick();
 		send(new IRCMessage("NICK", ourNick));
 		send(new IRCMessage("USER", preferences.getUser(), "*", "*", preferences.getRealName()));
@@ -99,9 +130,12 @@ public class IRCServer
 
 	public void onError(Exception e)
 	{
-		getTab().putLine(new TextEvent(TextEvent.ERROR, e.toString()));
+		for(Tab tab : service.tabs)
+			if(tab.getServerTab() == getTab())
+				tab.putLine(new TextEvent(TextEvent.ERROR, e.toString()));
 		connection = null;
-		registered = false;
+		reconnect = new Reconnect(this);
+		new Handler(Looper.getMainLooper()).postDelayed(reconnect, 5000);
 	}
 
 	public void onRegistered()
@@ -308,24 +342,20 @@ public class IRCServer
 		{
 			String nick = msg.getNick();
 			String channel = msg.args[0];
-			Tab tab;
+			Tab tab = srv.getService().findTab(srv.getTab(), channel);
 			if(srv.config.nickCollator.equals(nick, srv.ourNick))
 			{
-				tab = srv.getService().createTab(srv.getTab(), channel);
+				if(tab == null)
+					tab = srv.getService().createTab(srv.getTab(), channel);
 				tab.nickList.setComparator(srv.nickListEntryComparator);
 				srv.waitingNames.add(channel);
 			}
-			else
-			{
-				tab = srv.getService().findTab(srv.getTab(), channel);
-				if(tab != null)
-				{
-					tab.nickList.addOrdered(new NickListEntry(nick));
-					srv.getService().changeNickList(tab);
-				}
-			}
 			if(tab != null)
+			{
+				tab.nickList.addOrdered(new NickListEntry(nick));
+				srv.getService().changeNickList(tab);
 				tab.putLine(new TextEvent(TextEvent.JOIN, nick, msg.getUserHost(), channel));
+			}
 			return tab != null;
 		}
 

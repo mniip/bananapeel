@@ -33,7 +33,7 @@ public class ReceiverThread extends Thread
 				byte[] buffer = new byte[4096];
 				int len = stream.read(buffer, 0, buffer.length);
 				if(len == -1)
-					break;
+					throw new IOException("Connection closed");
 
 				int off = 0;
 				for(int i = 0; i < len; i++)

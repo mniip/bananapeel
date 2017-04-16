@@ -126,6 +126,7 @@ public class IRCServer
 		registered = false;
 		config = IRCServerConfig.rfc1459();
 		ourNick = preferences.getNick();
+		send(new IRCMessage("CAP", "LS"));
 		send(new IRCMessage("NICK", ourNick));
 		send(new IRCMessage("USER", preferences.getUser(), "*", "*", preferences.getRealName()));
 	}
@@ -335,6 +336,34 @@ public class IRCServer
 			{
 				srv.ourNick = srv.nextNick(srv.ourNick);
 				srv.send(new IRCMessage("NICK", srv.ourNick));
+			}
+			return false;
+		}
+
+		@Hook(command = "CAP", minParams = 2)
+		private static boolean onCap(IRCServer srv, IRCMessage msg)
+		{
+			srv.config.haveCaps = true;
+			String command = msg.args[1];
+			if(command.equalsIgnoreCase("LS") && msg.args.length >= 3)
+			{
+				srv.config.capsSupported.addAll(Arrays.asList(msg.args[2].split(" ")));
+
+				String request = "";
+
+				String[] wantCaps = {"account-notify", "extended-join", "multi-prefix"};
+				for(String cap : wantCaps)
+					if(srv.config.capsSupported.contains(cap))
+						request += cap + " ";
+
+				srv.send(new IRCMessage("CAP", "REQ", request));
+				srv.send(new IRCMessage("CAP", "END"));
+				return true;
+			}
+			else if(command.equalsIgnoreCase("ACK"))
+			{
+				srv.config.capsEnabled.addAll(Arrays.asList(msg.args[2].split(" ")));
+				return true;
 			}
 			return false;
 		}

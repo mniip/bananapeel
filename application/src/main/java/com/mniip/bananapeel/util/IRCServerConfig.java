@@ -19,6 +19,10 @@ public class IRCServerConfig
 	public String networkName;
 	public int modesPerLine;
 
+	public boolean haveCaps = false;
+	public List<String> capsSupported = new ArrayList<>();
+	public List<String> capsEnabled = new ArrayList<>();
+
 
 	public static IRCServerConfig rfc1459()
 	{

@@ -3,6 +3,7 @@ package com.mniip.bananapeel.service;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.mniip.bananapeel.util.Collators;
 import com.mniip.bananapeel.util.IRCMessage;
 import com.mniip.bananapeel.util.IRCServerConfig;
 import com.mniip.bananapeel.util.NickListEntry;
@@ -29,7 +30,7 @@ public class IRCServer
 	public String ourNick = "";
 	private List<String> waitingNames = new ArrayList<>();
 
-	public IRCServerConfig config = IRCServerConfig.rfc1459();
+	public IRCServerConfig config;
 
 	private static class ComposedComparator<T> implements Comparator<T>
 	{
@@ -123,6 +124,7 @@ public class IRCServer
 	public void onConnected()
 	{
 		registered = false;
+		config = IRCServerConfig.rfc1459();
 		ourNick = preferences.getNick();
 		send(new IRCMessage("NICK", ourNick));
 		send(new IRCMessage("USER", preferences.getUser(), "*", "*", preferences.getRealName()));
@@ -195,7 +197,7 @@ public class IRCServer
 		return defNick;
 	}
 
-	private Comparator<NickListEntry> nickListEntryComparator = new ComposedComparator<>(NickListEntry.statusComparator(config.statusChars), NickListEntry.nickComparator(config.nickCollator));
+	private Comparator<NickListEntry> nickListEntryComparator = NickListEntry.nickComparator(Collators.rfc1459());
 
 	private void updateComparator()
 	{
@@ -347,15 +349,21 @@ public class IRCServer
 			{
 				if(tab == null)
 					tab = srv.getService().createTab(srv.getTab(), channel);
+				else
+				{
+					tab.nickList.clear();
+					srv.service.changeNickList(tab);
+				}
 				tab.nickList.setComparator(srv.nickListEntryComparator);
 				srv.waitingNames.add(channel);
 			}
-			if(tab != null)
+			else if(tab != null)
 			{
 				tab.nickList.addOrdered(new NickListEntry(nick));
 				srv.getService().changeNickList(tab);
-				tab.putLine(new TextEvent(TextEvent.JOIN, nick, msg.getUserHost(), channel));
 			}
+			if(tab != null)
+				tab.putLine(new TextEvent(TextEvent.JOIN, nick, msg.getUserHost(), channel));
 			return tab != null;
 		}
 

@@ -2,6 +2,7 @@ package com.mniip.bananapeel.service;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Base64;
 
 import com.mniip.bananapeel.util.Collators;
 import com.mniip.bananapeel.util.IRCMessage;
@@ -27,6 +28,7 @@ public class IRCServer
 	private IRCServerPreferences preferences;
 
 	private boolean registered = false;
+	private boolean authenticating = false;
 	public String ourNick = "";
 	private List<String> waitingNames = new ArrayList<>();
 
@@ -126,7 +128,12 @@ public class IRCServer
 		registered = false;
 		config = IRCServerConfig.rfc1459();
 		ourNick = preferences.getNick();
+
 		send(new IRCMessage("CAP", "LS"));
+
+		if(preferences.getAuthMode().equals("pass"))
+			send(new IRCMessage("PASS", preferences.getPassword()));
+
 		send(new IRCMessage("NICK", ourNick));
 		send(new IRCMessage("USER", preferences.getUser(), "*", "*", preferences.getRealName()));
 	}
@@ -270,6 +277,8 @@ public class IRCServer
 			if(msg.args.length >= 1)
 				srv.ourNick = msg.args[0];
 			srv.onRegistered();
+			if(srv.preferences.getAuthMode().equals("nickserv"))
+				srv.send(new IRCMessage("PRIVMSG", "NickServ", "IDENTIFY " + srv.preferences.getPassword()));
 			return false;
 		}
 
@@ -340,6 +349,53 @@ public class IRCServer
 			return false;
 		}
 
+		@Hooks({@Hook(command = "902"), @Hook(command = "903"), @Hook(command = "904"), @Hook(command = "906")})
+		private static boolean onSASLReply(IRCServer srv, IRCMessage msg)
+		{
+			finishSASL(srv);
+			return false;
+		}
+
+		private static void startSASL(IRCServer srv)
+		{
+			srv.authenticating = true;
+			if(srv.preferences.getAuthMode().equals("sasl"))
+				srv.send(new IRCMessage("AUTHENTICATE", "PLAIN"));
+			else
+				finishSASL(srv);
+		}
+
+		private static void finishSASL(IRCServer srv)
+		{
+			if(srv.authenticating)
+			{
+				srv.send(new IRCMessage("CAP", "END"));
+				srv.authenticating = false;
+			}
+		}
+
+		@Hook(command = "AUTHENTICATE", minParams = 1)
+		private static boolean onAuthenticate(IRCServer srv, IRCMessage msg)
+		{
+			if(srv.preferences.getAuthMode().equals("sasl"))
+				if(msg.args[0].equals("+"))
+				{
+					String payload = srv.preferences.getUser() + "\0" + srv.preferences.getUser() + "\0" + srv.preferences.getPassword();
+					String encoded = Base64.encodeToString(payload.getBytes(), Base64.NO_WRAP);
+					int packetSize = 400;
+					for(int i = 0; i <= encoded.length(); i += packetSize)
+					{
+						if(i <= encoded.length() - packetSize)
+							srv.send(new IRCMessage("AUTHENTICATE", encoded.substring(i, i + packetSize)));
+						else if(i < encoded.length())
+							srv.send(new IRCMessage("AUTHENTICATE", encoded.substring(i)));
+						else
+							srv.send(new IRCMessage("AUTHENTICATE", "+"));
+					}
+				}
+			return true;
+		}
+
 		@Hook(command = "CAP", minParams = 2)
 		private static boolean onCap(IRCServer srv, IRCMessage msg)
 		{
@@ -351,18 +407,21 @@ public class IRCServer
 
 				String request = "";
 
-				String[] wantCaps = {"account-notify", "extended-join", "multi-prefix"};
+				List<String> wantCaps = new ArrayList<>(Arrays.asList("account-notify", "extended-join", "multi-prefix"));
+				if(srv.preferences.getAuthMode().equals("sasl"))
+					wantCaps.add("sasl");
 				for(String cap : wantCaps)
 					if(srv.config.capsSupported.contains(cap))
 						request += cap + " ";
 
 				srv.send(new IRCMessage("CAP", "REQ", request));
-				srv.send(new IRCMessage("CAP", "END"));
 				return true;
 			}
 			else if(command.equalsIgnoreCase("ACK"))
 			{
 				srv.config.capsEnabled.addAll(Arrays.asList(msg.args[2].split(" ")));
+				if(srv.config.capsEnabled.contains("sasl"))
+					startSASL(srv);
 				return true;
 			}
 			return false;

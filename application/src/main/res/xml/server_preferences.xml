@@ -4,12 +4,32 @@
     <EditTextPreference
         android:key="host"
         android:title="Server hostname" />
-
     <com.mniip.bananapeel.ui.EditIntPreference
         android:key="port"
         android:title="Server port"
         android:inputType="number"
         min="0"
         max="65535" />
+    <EditTextPreference
+        android:key="nick"
+        android:title="Nickname" />
+    <EditTextPreference
+        android:key="nickAlt"
+        android:title="Alternative Nickname" />
+    <EditTextPreference
+        android:key="user"
+        android:title="Username (ident)" />
+    <EditTextPreference
+        android:key="realName"
+        android:title="Real name (gecos)" />
+    <ListPreference
+        android:key="authMode"
+        android:title="Login method"
+        android:entries="@array/auth_modes_text"
+        android:entryValues="@array/auth_modes" />
+    <EditTextPreference
+        android:key="password"
+        android:title="Password"
+        android:inputType="textPassword" />
 
 </PreferenceScreen>

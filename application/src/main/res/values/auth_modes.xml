@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="auth_modes">
+        <item>none</item>
+        <item>nickserv</item>
+        <item>pass</item>
+        <item>sasl</item>
+    </string-array>
+    <string-array name="auth_modes_text">
+        <item>None</item>
+        <item>NickServ (/msg NickServ IDENTIFY)</item>
+        <item>Server password (/pass)</item>
+        <item>SASL PLAIN</item>
+    </string-array>
+</resources>

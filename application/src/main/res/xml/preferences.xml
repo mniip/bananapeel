@@ -6,7 +6,16 @@
 
         <EditTextPreference
             android:key="defaultNick"
-            android:title="Nickname" />
+            android:title="Default Nickname" />
+        <EditTextPreference
+            android:key="defaultNickAlt"
+            android:title="Alternative Nickname" />
+        <EditTextPreference
+            android:key="defaultUser"
+            android:title="Username (ident)" />
+        <EditTextPreference
+            android:key="defaultRealName"
+            android:title="Real name (gecos)" />
 
     </PreferenceScreen>
 

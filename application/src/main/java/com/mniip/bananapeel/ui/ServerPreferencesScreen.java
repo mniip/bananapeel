@@ -3,6 +3,7 @@ package com.mniip.bananapeel.ui;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
+import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceScreen;
@@ -41,6 +42,8 @@ public class ServerPreferencesScreen extends PreferenceActivity implements Share
 				((EditIntPreference)preference).setInt(preference.getSharedPreferences().getInt(key, -1));
 			else if(preference instanceof EditTextPreference)
 				((EditTextPreference)preference).setText(preference.getSharedPreferences().getString(key, null));
+			else if(preference instanceof ListPreference)
+				((ListPreference)preference).setValue(preference.getSharedPreferences().getString(key, null));
 			if(preference instanceof PreferenceScreen)
 				setKeys((PreferenceScreen)preference);
 		}
@@ -51,18 +54,25 @@ public class ServerPreferencesScreen extends PreferenceActivity implements Share
 		for(int i = 0; i < screen.getPreferenceCount(); i++)
 		{
 			Preference preference = screen.getPreference(i);
-			if(preference instanceof EditTextPreference)
-				preference.setSummary(((EditTextPreference)preference).getText());
+			setSingleDescription(preference);
 			if(preference instanceof PreferenceScreen)
 				setDescriptions((PreferenceScreen)preference);
 		}
 	}
 
+	private void setSingleDescription(Preference preference)
+	{
+		if(preference.getKey().endsWith(";password"))
+			return;
+		if(preference instanceof EditTextPreference)
+			preference.setSummary(((EditTextPreference)preference).getText());
+		if(preference instanceof ListPreference)
+			preference.setSummary(((ListPreference)preference).getEntry());
+	}
+
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences preferences, String key)
 	{
-		Preference preference = findPreference(key);
-		if(preference instanceof EditTextPreference)
-			preference.setSummary(((EditTextPreference)preference).getText());
+		setSingleDescription(findPreference(key));
 	}
 }

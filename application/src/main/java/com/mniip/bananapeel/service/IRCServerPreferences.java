@@ -15,6 +15,8 @@ public abstract class IRCServerPreferences
 	abstract public String getNickAlt();
 	abstract public String getUser();
 	abstract public String getRealName();
+	abstract public String getAuthMode();
+	abstract public String getPassword();
 
 	public static List<String> listServers(SharedPreferences p)
 	{
@@ -55,6 +57,8 @@ public abstract class IRCServerPreferences
 		private static final String PREF_NICK_ALT = ";nickAlt";
 		private static final String PREF_USER = ";user";
 		private static final String PREF_REAL_NAME = ";realName";
+		private static final String PREF_AUTH_MODE = ";authMode";
+		private static final String PREF_PASSWORD = ";password";
 
 		private void setDefaults(SharedPreferences p)
 		{
@@ -63,6 +67,8 @@ public abstract class IRCServerPreferences
 				e.putString(name + PREF_HOST, "localhost");
 			if(p.getInt(name + PREF_PORT, -1) == -1)
 				e.putInt(name + PREF_PORT, 6667);
+			if(p.getString(name + PREF_AUTH_MODE, null) == null)
+				e.putString(name + PREF_AUTH_MODE, "none");
 			e.apply();
 		}
 
@@ -158,6 +164,16 @@ public abstract class IRCServerPreferences
 				realName = parent.getDefaultNick();
 			return realName;
 		}
+
+		public String getAuthMode()
+		{
+			return preferences.getString(name + PREF_AUTH_MODE, "");
+		}
+
+		public String getPassword()
+		{
+			return preferences.getString(name + PREF_PASSWORD, "");
+		}
 	}
 
 	public static class Dummy extends IRCServerPreferences
@@ -209,6 +225,16 @@ public abstract class IRCServerPreferences
 		public String getRealName()
 		{
 			return parent.getDefaultRealName();
+		}
+
+		public String getAuthMode()
+		{
+			return "none";
+		}
+
+		public String getPassword()
+		{
+			return "";
 		}
 	}
 }

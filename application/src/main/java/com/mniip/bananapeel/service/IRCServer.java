@@ -359,7 +359,7 @@ public class IRCServer
 		private static void startSASL(IRCServer srv)
 		{
 			srv.authenticating = true;
-			if(srv.preferences.getAuthMode().equals("sasl"))
+			if(srv.preferences.getAuthMode().equals("sasl") && srv.config.capsEnabled.contains("sasl"))
 				srv.send(new IRCMessage("AUTHENTICATE", "PLAIN"));
 			else
 				finishSASL(srv);
@@ -420,8 +420,7 @@ public class IRCServer
 			else if(command.equalsIgnoreCase("ACK"))
 			{
 				srv.config.capsEnabled.addAll(Arrays.asList(msg.args[2].split(" ")));
-				if(srv.config.capsEnabled.contains("sasl"))
-					startSASL(srv);
+				startSASL(srv);
 				return true;
 			}
 			return false;

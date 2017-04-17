@@ -8,6 +8,7 @@
     <android.support.v4.widget.DrawerLayout
         android:layout_height="match_parent"
         android:layout_width="match_parent"
+        android:id="@+id/drawerLayout"
         android:background="@android:color/transparent">
 
         <LinearLayout
@@ -41,7 +42,7 @@
         <ListView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:id="@+id/server_list"
+            android:id="@+id/channel_list"
             android:layout_gravity="left"
             android:choiceMode="singleChoice"
             android:background="#111111"/>

@@ -2,6 +2,7 @@ package com.mniip.bananapeel.service;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import com.mniip.bananapeel.util.IRCMessage;
 

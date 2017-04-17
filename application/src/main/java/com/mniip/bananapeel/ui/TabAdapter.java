@@ -4,9 +4,11 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.PagerAdapter;
+import android.support.v4.widget.DrawerLayout;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.mniip.bananapeel.R;
 import com.mniip.bananapeel.service.IRCService;
 import com.mniip.bananapeel.service.Tab;
 import com.mniip.bananapeel.util.IntMap;
@@ -92,6 +94,13 @@ public class TabAdapter extends PagerAdapter
         {
             int id = tabIds.get(position);
             service.setFrontTab(id);
+
+            View nickList = (View)mainScreen.findViewById(R.id.nick_list);
+            DrawerLayout drawerLayout = (DrawerLayout)mainScreen.findViewById(R.id.drawerLayout);
+            if (service.getFrontTab().nickList == null)
+                drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, nickList);
+            else if (drawerLayout.getDrawerLockMode(nickList) == DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+                drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, nickList);
             mainScreen.getNickListAdapter().notifyDataSetChanged();
         }
     }

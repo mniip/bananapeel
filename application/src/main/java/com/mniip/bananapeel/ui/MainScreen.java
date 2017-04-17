@@ -18,6 +18,7 @@ import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.mniip.bananapeel.service.IRCServer;
 import com.mniip.bananapeel.service.IRCService;
 import com.mniip.bananapeel.util.NickListEntry;
 import com.mniip.bananapeel.R;
@@ -86,8 +87,15 @@ public class MainScreen extends FragmentActivity
 		@Override
 		public void onServiceConnected(ComponentName cls, IBinder binder)
 		{
-			getService().setListener(ircInterfaceListener);
-			tabAdapter.setService(getService());
+			IRCService service = getService();
+			service.setListener(ircInterfaceListener);
+			tabAdapter.setService(service);
+			if (service.getFrontTab().nickList != null)
+			{
+				View nickList = (View)findViewById(R.id.nick_list);
+				DrawerLayout drawerLayout = (DrawerLayout)findViewById(R.id.drawerLayout);
+				drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, nickList);
+			}
 		}
 
 		@Override
@@ -103,7 +111,7 @@ public class MainScreen extends FragmentActivity
 		public int getCount()
 		{
 			IRCService service = getService();
-			if(service == null)
+			if(service == null || service.getFrontTab().nickList == null)
 				return 0;
 			return service.getFrontTab().nickList.size();
 		}
@@ -124,7 +132,17 @@ public class MainScreen extends FragmentActivity
 		public View getView(int position, View convertView, ViewGroup parent)
 		{
 			if(convertView == null)
+			{
 				convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.nick_line, parent, false);
+				convertView.setOnClickListener(new TextView.OnClickListener()
+				{
+					@Override
+					public void onClick(View v)
+					{
+
+					}
+				});
+			}
 
 			NickListEntry entry = getService().getFrontTab().nickList.get(position);
 			((TextView)convertView).setText((entry.highestStatus == null ? "" : entry.highestStatus.toString()) + entry.nick);
@@ -134,7 +152,17 @@ public class MainScreen extends FragmentActivity
 		public void onTabNickListChanged(int tabId)
 		{
 			if(getService().getFrontTab().getId() == tabId)
+			{
+				View nickList = (View)findViewById(R.id.nick_list);
+				DrawerLayout drawerLayout = (DrawerLayout)findViewById(R.id.drawerLayout);
+				if (getService().getFrontTab().nickList == null)
+				{
+					drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, nickList);
+				}
+				else if (drawerLayout.getDrawerLockMode(nickList) == DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+					drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, nickList);
 				notifyDataSetChanged();
+			}
 		}
 	}
 
@@ -152,10 +180,10 @@ public class MainScreen extends FragmentActivity
 
 		int width = getResources().getDisplayMetrics().widthPixels/2;
 
-		ListView serverList = (ListView)findViewById(R.id.server_list);
-		DrawerLayout.LayoutParams sParams = (DrawerLayout.LayoutParams) serverList.getLayoutParams();// android.support.v4.widget.
+		ListView channelList = (ListView)findViewById(R.id.channel_list);
+		DrawerLayout.LayoutParams sParams = (DrawerLayout.LayoutParams) channelList.getLayoutParams();// android.support.v4.widget.
 		sParams.width = width;
-		serverList.setLayoutParams(sParams);
+		channelList.setLayoutParams(sParams);
 
 		ListView nickList = (ListView)findViewById(R.id.nick_list);
 		nickListAdapter = new NickListAdapter();
@@ -163,6 +191,9 @@ public class MainScreen extends FragmentActivity
 		DrawerLayout.LayoutParams Nparams = (DrawerLayout.LayoutParams) nickList.getLayoutParams();// android.support.v4.widget.
 		Nparams.width = width;
 		nickList.setLayoutParams(Nparams);
+
+		DrawerLayout drawerLayout = (DrawerLayout)findViewById(R.id.drawerLayout);
+		drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, nickList);
 
 		ViewPager pager = (ViewPager)findViewById(R.id.view_pager);
 		tabAdapter = new TabAdapter(getSupportFragmentManager(), this);

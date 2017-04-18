@@ -15,7 +15,7 @@ public class Tab
 	private IRCService service;
 	private int id;
 	private String title;
-	public OrderedList<NickListEntry> nickList = new OrderedList<>(NickListEntry.nickComparator(Collators.rfc1459()));
+	public OrderedList<NickListEntry> nickList;
 	private List<TextEvent> textLines = new ArrayList<>();
 
 	public Tab(IRCService service, ServerTab serverTab, int id, String title)

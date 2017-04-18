@@ -8,6 +8,7 @@ import com.mniip.bananapeel.util.Collators;
 import com.mniip.bananapeel.util.IRCMessage;
 import com.mniip.bananapeel.util.IRCServerConfig;
 import com.mniip.bananapeel.util.NickListEntry;
+import com.mniip.bananapeel.util.OrderedList;
 import com.mniip.bananapeel.util.TextEvent;
 
 import java.lang.annotation.Annotation;
@@ -211,7 +212,7 @@ public class IRCServer
 	{
 		nickListEntryComparator = new ComposedComparator<>(NickListEntry.statusComparator(config.statusChars), NickListEntry.nickComparator(config.nickCollator));
 		for(Tab tab : service.tabs)
-			if(tab.getServerTab().server == this)
+			if(tab.getServerTab().server == this && tab.nickList != null)
 			{
 				tab.nickList.setComparator(nickListEntryComparator);
 				service.changeNickList(tab);
@@ -435,7 +436,10 @@ public class IRCServer
 			if(srv.config.nickCollator.equals(nick, srv.ourNick))
 			{
 				if(tab == null)
+				{
 					tab = srv.getService().createTab(srv.getTab(), channel);
+					tab.nickList = new OrderedList<>(srv.nickListEntryComparator);
+				}
 				else
 				{
 					tab.nickList.clear();

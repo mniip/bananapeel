@@ -3,6 +3,7 @@ package com.mniip.bananapeel.service;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Base64;
+import android.util.Log;
 
 import com.mniip.bananapeel.util.Collators;
 import com.mniip.bananapeel.util.IRCMessage;
@@ -143,7 +144,10 @@ public class IRCServer
 	{
 		for(Tab tab : service.tabs)
 			if(tab.getServerTab() == getTab())
+			{
 				tab.putLine(new TextEvent(TextEvent.ERROR, e.toString()));
+				Log.d("BananaPeel", "", e);
+			}
 		connection = null;
 		reconnect = new Reconnect(this);
 		new Handler(Looper.getMainLooper()).postDelayed(reconnect, 5000);

@@ -1,5 +1,7 @@
 package com.mniip.bananapeel.service;
 
+import android.util.Log;
+
 import com.mniip.bananapeel.util.IRCMessage;
 
 import java.io.ByteArrayOutputStream;
@@ -53,6 +55,8 @@ public class ReceiverThread extends Thread
 		{
 			if(hadError.compareAndSet(false, true))
 				server.onError(e);
+			else
+				Log.d("BananaPeel", "ignored", e);
 		}
 	}
 }

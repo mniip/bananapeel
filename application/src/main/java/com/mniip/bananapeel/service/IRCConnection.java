@@ -112,6 +112,7 @@ public class IRCConnection
 
 	public void send(IRCMessage msg)
 	{
-		sender.queueMessage(msg);
+		if(sender != null)
+			sender.queueMessage(msg);
 	}
 }

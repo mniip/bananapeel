@@ -2,6 +2,7 @@ package com.mniip.bananapeel.ui;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
@@ -44,6 +45,8 @@ public class ServerPreferencesScreen extends PreferenceActivity implements Share
 				((EditTextPreference)preference).setText(preference.getSharedPreferences().getString(key, null));
 			else if(preference instanceof ListPreference)
 				((ListPreference)preference).setValue(preference.getSharedPreferences().getString(key, null));
+			else if(preference instanceof CheckBoxPreference)
+				((CheckBoxPreference)preference).setChecked(preference.getSharedPreferences().getBoolean(key, false));
 			if(preference instanceof PreferenceScreen)
 				setKeys((PreferenceScreen)preference);
 		}
@@ -73,6 +76,8 @@ public class ServerPreferencesScreen extends PreferenceActivity implements Share
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences preferences, String key)
 	{
-		setSingleDescription(findPreference(key));
+		Preference preference = findPreference(key);
+		if(preference != null)
+			setSingleDescription(preference);
 	}
 }

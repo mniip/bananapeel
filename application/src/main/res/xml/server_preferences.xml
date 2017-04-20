@@ -10,6 +10,9 @@
         android:inputType="number"
         min="0"
         max="65535" />
+    <CheckBoxPreference
+        android:key="ssl"
+        android:title="Use SSL" />
     <EditTextPreference
         android:key="nick"
         android:title="Nickname" />

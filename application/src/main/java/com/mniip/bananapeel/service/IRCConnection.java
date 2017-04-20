@@ -10,17 +10,21 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import javax.net.SocketFactory;
+
 public class IRCConnection
 {
 	private IRCServer server;
+	private SocketFactory factory;
 	private Socket socket;
 	private ReceiverThread receiver;
 	private SenderThread sender;
 	private AtomicBoolean hadError;
 
-	public IRCConnection(IRCServer server)
+	public IRCConnection(IRCServer server, SocketFactory factory)
 	{
 		this.server = server;
+		this.factory = factory;
 	}
 
 	public IRCServer getServer()
@@ -31,7 +35,15 @@ public class IRCConnection
 	public void connect(String hostname, int port)
 	{
 		hadError = new AtomicBoolean(false);
-		socket = new Socket();
+
+		try
+		{
+			socket = factory.createSocket();
+		} catch(IOException e)
+		{
+			onError(e);
+			return;
+		}
 
 		sender = new SenderThread(this, socket, hadError, hostname, port);
 		sender.start();

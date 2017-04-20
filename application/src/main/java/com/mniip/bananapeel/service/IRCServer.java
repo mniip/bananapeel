@@ -17,10 +17,18 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.security.GeneralSecurityException;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 public class IRCServer
 {
@@ -104,13 +112,44 @@ public class IRCServer
 
 	private Reconnect reconnect = null;
 
+	private static TrustManager[] trustAllCerts = new TrustManager[]
+			{
+					new X509TrustManager()
+					{
+						public X509Certificate[] getAcceptedIssuers()
+						{
+							return new X509Certificate[0];
+						}
+						public void checkClientTrusted(X509Certificate[] certs, String authType) { }
+						public void checkServerTrusted(X509Certificate[] certs, String authType) { }
+					}
+			}; // TODO: proper trust management
+
 	public void connect()
 	{
 		if(reconnect != null)
 			reconnect.cancel(); // No race condition because it all runs on the main thread
 		if(connection != null)
 			connection.disconnect();
-		connection = new IRCConnection(this);
+
+		SocketFactory factory;
+		if(preferences.isSSL())
+			try
+			{
+				SSLContext context = SSLContext.getInstance("SSL");
+				context.init(null, trustAllCerts, new SecureRandom());
+				factory = context.getSocketFactory();
+			}
+			catch(GeneralSecurityException e)
+			{
+				serverTab.putLine(new TextEvent(TextEvent.ERROR, e.toString()));
+				Log.d("BananaPeel", "", e);
+				return;
+			}
+		else
+			factory = SocketFactory.getDefault();
+
+		connection = new IRCConnection(this, factory);
 		connection.connect(preferences.getHost(), preferences.getPort());
 	}
 

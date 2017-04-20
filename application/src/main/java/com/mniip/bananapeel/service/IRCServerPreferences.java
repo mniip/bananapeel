@@ -11,6 +11,7 @@ public abstract class IRCServerPreferences
 	abstract public String getName();
 	abstract public String getHost();
 	abstract public int getPort();
+	abstract public boolean isSSL();
 	abstract public String getNick();
 	abstract public String getNickAlt();
 	abstract public String getUser();
@@ -53,6 +54,7 @@ public abstract class IRCServerPreferences
 
 		private static final String PREF_HOST = ";host";
 		private static final String PREF_PORT = ";port";
+		private static final String PREF_SSL = ";ssl";
 		private static final String PREF_NICK = ";nick";
 		private static final String PREF_NICK_ALT = ";nickAlt";
 		private static final String PREF_USER = ";user";
@@ -133,6 +135,11 @@ public abstract class IRCServerPreferences
 			return preferences.getInt(name + PREF_PORT, -1);
 		}
 
+		public boolean isSSL()
+		{
+			return preferences.getBoolean(name + PREF_SSL, false);
+		}
+
 		public String getNick()
 		{
 			String nick = preferences.getString(name + PREF_NICK, "");
@@ -200,6 +207,11 @@ public abstract class IRCServerPreferences
 		public String getHost()
 		{
 			return host;
+		}
+
+		public boolean isSSL()
+		{
+			return false;
 		}
 
 		public int getPort()

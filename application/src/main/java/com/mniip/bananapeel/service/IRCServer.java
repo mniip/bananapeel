@@ -512,19 +512,20 @@ public class IRCServer
 				seen = true;
 			}
 			for(Tab tab : srv.getService().tabs)
-				for(int i = 0; i < tab.nickList.size(); i++)
-				{
-					NickListEntry entry = tab.nickList.get(i);
-					if(srv.config.nickCollator.equals(entry.nick, from))
+				if(tab.getServerTab() == srv.serverTab && tab.nickList != null)
+					for(int i = 0; i < tab.nickList.size(); i++)
 					{
-						entry.nick = to;
-						tab.nickList.setOrdered(i, entry);
-						srv.getService().changeNickList(tab);
-						tab.putLine(new TextEvent(TextEvent.NICK_CHANGE, from, to));
-						seen = true;
-						break;
+						NickListEntry entry = tab.nickList.get(i);
+						if(srv.config.nickCollator.equals(entry.nick, from))
+						{
+							entry.nick = to;
+							tab.nickList.setOrdered(i, entry);
+							srv.getService().changeNickList(tab);
+							tab.putLine(new TextEvent(TextEvent.NICK_CHANGE, from, to));
+							seen = true;
+							break;
+						}
 					}
-				}
 			return seen;
 		}
 
@@ -534,7 +535,7 @@ public class IRCServer
 			String nick = msg.getNick();
 			String channel = msg.args[0];
 			String reason = msg.args.length >= 2 ? msg.args[1] : null;
-			Tab tab = srv.getService().findTab(srv.getTab(), channel);
+			Tab tab = srv.getService().findTab(srv.serverTab, channel);
 			if(srv.config.nickCollator.equals(nick, srv.ourNick))
 			{
 				if(tab != null)
@@ -606,26 +607,27 @@ public class IRCServer
 			String reason = msg.args.length >= 1 ? msg.args[0] : null;
 			boolean seen = false;
 			for(Tab tab : srv.getService().tabs)
-			{
-				boolean found = false;
-				for(int i = 0; i < tab.nickList.size(); )
-					if(srv.config.nickCollator.equals(tab.nickList.get(i).nick, nick))
-					{
-						tab.nickList.remove(i);
-						found = true;
-					}
-					else
-						i++;
-				if(found)
+				if(tab.getServerTab() == srv.serverTab && tab.nickList != null)
 				{
-					seen = true;
-					srv.getService().changeNickList(tab);
-					if(reason == null)
-						tab.putLine(new TextEvent(TextEvent.QUIT, nick, msg.getUserHost()));
-					else
-						tab.putLine(new TextEvent(TextEvent.QUIT_WITH_REASON, nick, msg.getUserHost(), reason));
+					boolean found = false;
+					for(int i = 0; i < tab.nickList.size(); )
+						if(srv.config.nickCollator.equals(tab.nickList.get(i).nick, nick))
+						{
+							tab.nickList.remove(i);
+							found = true;
+						}
+						else
+							i++;
+					if(found)
+					{
+						seen = true;
+						srv.getService().changeNickList(tab);
+						if(reason == null)
+							tab.putLine(new TextEvent(TextEvent.QUIT, nick, msg.getUserHost()));
+						else
+							tab.putLine(new TextEvent(TextEvent.QUIT_WITH_REASON, nick, msg.getUserHost(), reason));
+					}
 				}
-			}
 			return seen;
 		}
 

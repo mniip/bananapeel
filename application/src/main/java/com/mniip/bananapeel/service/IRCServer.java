@@ -5,6 +5,7 @@ import android.os.Looper;
 import android.util.Base64;
 import android.util.Log;
 
+import com.mniip.bananapeel.R;
 import com.mniip.bananapeel.util.Collators;
 import com.mniip.bananapeel.util.IRCMessage;
 import com.mniip.bananapeel.util.IRCServerConfig;
@@ -23,6 +24,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 
 import javax.net.SocketFactory;
@@ -616,13 +618,58 @@ public class IRCServer
 			return true;
 		}
 
+		private static void sendCTCPReply(IRCServer srv, String nick, String command)
+		{
+			srv.send(new IRCMessage("NOTICE", nick, "\001" + command + "\001"));
+		}
+
+		private static boolean onCTCP(IRCServer srv, String nick, String target, String request)
+		{
+			int at = request.indexOf(' ');
+			String command = at == -1 ? request : request.substring(0, at);
+			String args = at == -1 ? "" : request.substring(at + 1);
+
+			if(command.equalsIgnoreCase("ACTION"))
+				if(srv.config.nickCollator.equals(target, srv.ourNick))
+				{
+					Tab tab = srv.getService().findTab(srv.getTab(), nick);
+					if(tab == null)
+						tab = srv.getService().createTab(srv.getTab(), nick);
+					tab.putLine(new TextEvent(TextEvent.CTCP_ACTION, nick, args));
+					return true;
+				}
+				else
+				{
+					Tab tab = srv.getService().findTab(srv.getTab(), target);
+					if(tab != null)
+						tab.putLine(new TextEvent(TextEvent.CTCP_ACTION, nick, args));
+					return tab != null;
+				}
+
+			if(srv.config.nickCollator.equals(target, srv.ourNick))
+				srv.service.getFrontTab().putLine(new TextEvent(TextEvent.CTCP_PRIVATE, nick, command, args));
+			else
+				srv.service.getFrontTab().putLine(new TextEvent(TextEvent.CTCP_CHANNEL, nick, command, args, target));
+
+			if(command.equalsIgnoreCase("VERSION"))
+				sendCTCPReply(srv, nick, "VERSION " + srv.service.getString(R.string.app_name));
+			else if(command.equalsIgnoreCase("TIME"))
+				sendCTCPReply(srv, nick, "TIME " + new Date().toString());
+			else if(command.equalsIgnoreCase("PING"))
+				sendCTCPReply(srv, nick, "PING " + args);
+
+			return true;
+		}
+
 		@Hook(command = "PRIVMSG", minParams = 2, requireSource = true)
 		private static boolean onPrivmsg(IRCServer srv, IRCMessage msg)
 		{
 			String nick = msg.getNick();
 			String target = msg.args[0];
 			String text = msg.args[1];
-			if(srv.config.nickCollator.equals(target, srv.ourNick))
+			if(text.length() >= 2 && text.charAt(0) == '\001' && text.charAt(text.length() - 1) == '\001')
+				return onCTCP(srv, nick, target, text.substring(1, text.length() - 1));
+			else if(srv.config.nickCollator.equals(target, srv.ourNick))
 			{
 				Tab tab = srv.getService().findTab(srv.getTab(), nick);
 				if(tab == null)

@@ -1,6 +1,8 @@
 package com.mniip.bananapeel.util;
 
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class IRCMessage
 {
@@ -49,6 +51,7 @@ public class IRCMessage
 		}
 	}
 
+	public Map<String, String> tags;
 	public Source source;
 	public String command;
 	public String[] args;
@@ -78,17 +81,37 @@ public class IRCMessage
 	{
 	}
 
-	public IRCMessage(Source source, String command, String... args)
+	public IRCMessage(Map<String, String> tags, Source source, String command, String... args)
 	{
+		this.tags = tags;
 		this.source = source;
 		this.command = command;
 		this.args = args;
 	}
 
+	public IRCMessage(Map<String, String> tags, String command, String... args)
+	{
+		this(tags, null, command, args);
+	}
+
+	public IRCMessage(Source source, String command, String... args)
+	{
+		this(null, source, command, args);
+	}
+
 	public IRCMessage(String command, String... args)
 	{
-		this.command = command;
-		this.args = args;
+		this(null, null, command, args);
+	}
+
+	private static String tagEscape(String value)
+	{
+		return value.replaceAll("\\\\", "\\\\\\\\").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r").replaceAll(" ", "\\\\s").replaceAll(";", "\\\\:");
+	}
+
+	private static String tagUnescape(String value)
+	{
+		return value.replaceAll("\\\\:", ";").replaceAll("\\\\s", " ").replaceAll("\\\\r", "\r").replaceAll("\\\\n", "\n").replaceAll("\\\\\\\\", "\\\\\\");
 	}
 
 	public String toIRC()
@@ -97,6 +120,22 @@ public class IRCMessage
 			return rawString;
 
 		StringBuilder b = new StringBuilder();
+
+		if(tags != null)
+		{
+			b.append('@');
+			boolean first = true;
+			for(Map.Entry<String, String> tag : tags.entrySet())
+			{
+				if(!first)
+					b.append(';');
+				first = false;
+				b.append(tag.getKey());
+				if(tag.getValue() != null)
+					b.append('=').append(tagEscape(tag.getValue()));
+			}
+			b.append(' ');
+		}
 
 		if(source != null)
 			b.append(':').append(source.text).append(' ');
@@ -115,6 +154,32 @@ public class IRCMessage
 	{
 		origStr = origStr.replace("\n", "").replace("\r", "");
 		String str = origStr;
+
+		Map<String, String> tags = null;
+		if(str.length() > 0 && str.charAt(0) == '@')
+		{
+			tags = new TreeMap<>();
+			int idx = str.indexOf(' ');
+			String tagData;
+			if(idx == -1)
+			{
+				tagData = str.substring(1);
+				str = "";
+			}
+			else
+			{
+				tagData = str.substring(1, idx);
+				str = str.substring(idx + 1);
+			}
+			for(String tag : tagData.split(";"))
+			{
+				int at = tag.indexOf('=');
+				if(at == -1)
+					tags.put(tag, null);
+				else
+					tags.put(tag.substring(0, at), tagUnescape(tag.substring(at + 1)));
+			}
+		}
 
 		Source src = null;
 		if(str.length() > 0 && str.charAt(0) == ':')
@@ -167,6 +232,7 @@ public class IRCMessage
 		}
 
 		IRCMessage msg = new IRCMessage();
+		msg.tags = tags;
 		msg.source = src;
 		msg.command = cmd;
 		msg.args = args.toArray(new String[args.size()]);

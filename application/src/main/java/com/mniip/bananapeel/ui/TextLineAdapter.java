@@ -36,7 +36,7 @@ public class TextLineAdapter extends RecyclerView.Adapter<TextLineAdapter.ViewHo
     @Override
     public void onBindViewHolder(ViewHolder holder, int lineNum)
     {
-        holder.view.setText(IRCFormatting.parse(textLines.get(lineNum).getText()));
+        holder.view.setText(textLines.get(lineNum).getText());
     }
 
     @Override

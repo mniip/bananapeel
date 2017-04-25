@@ -1,43 +1,55 @@
 package com.mniip.bananapeel.util;
 
+import android.text.Editable;
+import android.text.Spannable;
+import android.text.SpannableString;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Map;
+import java.util.TreeMap;
+
+import static com.mniip.bananapeel.util.TextEvent.Type.*;
 
 public class TextEvent
 {
-	public static final int ERROR = 0;
-	public static final int RAW = 1;
-	public static final int NUMERIC = 2;
-	public static final int MESSAGE = 3;
-	public static final int JOIN = 4;
-	public static final int PART = 5;
-	public static final int PART_WITH_REASON = 6;
-	public static final int QUIT = 7;
-	public static final int QUIT_WITH_REASON = 8;
-	public static final int NICK_CHANGE = 9;
-	public static final int MODE_CHANGE = 10;
+	public static enum Type
+	{
+		ERROR,
+		RAW,
+		NUMERIC,
+		MESSAGE,
+		OUR_MESSAGE,
+		JOIN,
+		PART,
+		PART_WITH_REASON,
+		QUIT,
+		QUIT_WITH_REASON,
+		NICK_CHANGE,
+		MODE_CHANGE,
+		CTCP_ACTION,
+		OUR_CTCP_ACTION,
+		CTCP_PRIVATE,
+		CTCP_CHANNEL
+	}
 
-	private Date timestamp;
-	private int type;
-	private String[] args;
+	private final Date timestamp;
+	private final Type type;
+	private final String[] args;
 
-	public TextEvent(int type, String... args)
+	public TextEvent(Type type, String... args)
 	{
 		timestamp = new Date();
 		this.type = type;
-		this.args = new String[4];
-		for(int i = 0; i < 4; i++)
-			this.args[i] = i < args.length ? args[i] : "";
+		this.args = args;
 	}
 
-	public TextEvent(Date timestamp, int type, String... args)
+	public TextEvent(Date timestamp, Type type, String... args)
 	{
 		this.timestamp = timestamp;
 		this.type = type;
-		this.args = new String[4];
-		for(int i = 0; i < 4; i++)
-			this.args[i] = i < args.length & args[i] != null ? args[i] : "";
+		this.args = args;
 	}
 
 	public Date getTimestamp()
@@ -45,7 +57,7 @@ public class TextEvent
 		return timestamp;
 	}
 
-	public int getType()
+	public Type getType()
 	{
 		return type;
 	}
@@ -55,31 +67,63 @@ public class TextEvent
 		return args;
 	}
 
-	private static final IntMap<String> templates = initializeTemplates();
+	private static Editable.Factory editableFactory = new Editable.Factory();
 
-	private static IntMap<String> initializeTemplates()
+	private static Editable formatColor(Spannable format, String... args)
 	{
-		IntMap<String> templates = new IntMap<>();
-		templates.put(ERROR, "%1$s");
+		Editable text = editableFactory.newEditable(format);
+		for(int i = 0; i < text.length(); )
+		{
+			if(text.charAt(i) == '$' && i + 1 < text.length())
+			{
+				if(Character.isDigit(text.charAt(i + 1)))
+				{
+					int digit = Character.digit(text.charAt(i + 1), 10);
+					Spannable arg = digit < args.length ? IRCFormatting.parse(args[digit]) : new SpannableString("");
+					text.replace(i, i + 2, arg);
+					i += arg.length();
+					continue;
+				}
+				if(text.charAt(i + 1) == '$')
+				{
+					text.replace(i, i + 2, "$");
+					i++;
+					continue;
+				}
+			}
+			i++;
+		}
+		return text;
+	}
 
-		templates.put(RAW, "%1$s");
-		templates.put(NUMERIC, "* (%1$s) %2$s");
+	private static final Map<Type, Spannable> templates = new TreeMap<>();
 
-		templates.put(MESSAGE, "<%3$s%1$s> %2$s");
-		templates.put(JOIN, "* %1$s (%2$s) has joined %3$s");
-		templates.put(PART, "* %1$s (%2$s) has left %3$s");
-		templates.put(PART_WITH_REASON, "* %1$s (%2$s) has left %3$s (%4$s)");
-		templates.put(QUIT, "* %1$s (%2$s) has quit");
-		templates.put(QUIT_WITH_REASON, "* %1$s (%2$s) has quit (%3$s)");
-		templates.put(NICK_CHANGE, "* %1$s has changed nick to %2$s");
-		templates.put(MODE_CHANGE, "* %1$s has set mode %2$s %3$s");
-		return templates;
+	static
+	{
+		templates.put(ERROR, IRCFormatting.parse("$0"));
+		templates.put(RAW, IRCFormatting.parse("$0"));
+		templates.put(NUMERIC, IRCFormatting.parse("\00313* ($0)\017 $1"));
+		templates.put(MESSAGE, IRCFormatting.parse("\00311<$2$0>\017 $1"));
+		templates.put(OUR_MESSAGE, IRCFormatting.parse("\00313<$2$0>\017 $1"));
+		templates.put(JOIN, IRCFormatting.parse("\00308* $0 ($1) has joined \00312$2"));
+		templates.put(PART, IRCFormatting.parse("\00311* $0 ($1) has left \00312$2"));
+		templates.put(PART_WITH_REASON, IRCFormatting.parse("\00311* $0 ($1) has left \00312$2\00311 ($3)"));
+		templates.put(QUIT, IRCFormatting.parse("\00312* $0 ($1) has quit"));
+		templates.put(QUIT_WITH_REASON, IRCFormatting.parse("\00312* $0 ($1) has quit ($2)"));
+		templates.put(NICK_CHANGE, IRCFormatting.parse("* \00311$0\017 has changed nick to \00311$1\017"));
+		templates.put(MODE_CHANGE, IRCFormatting.parse("* \00311$0\017 has set mode \00312$1\017 $2"));
+		templates.put(CTCP_ACTION, IRCFormatting.parse("* \00311$2$0\017 $1"));
+		templates.put(OUR_CTCP_ACTION, IRCFormatting.parse("* \00313$2$0\017 $1"));
+		templates.put(CTCP_PRIVATE, IRCFormatting.parse("* $0 requested CTCP $1 $2"));
+		templates.put(CTCP_CHANNEL, IRCFormatting.parse("* $0 requested CTCP $1 $2"));
 	}
 
 	private static final DateFormat timestampFormatter = new SimpleDateFormat("[HH:mm:ss] ");
 
-	public String getText()
+	public Spannable getText()
 	{
-		return timestampFormatter.format(timestamp) + String.format(templates.get(type), (Object[])args);
+		Editable text = formatColor(templates.get(type), args);
+		text.insert(0, timestampFormatter.format(timestamp));
+		return text;
 	}
 }

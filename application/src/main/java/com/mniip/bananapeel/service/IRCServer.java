@@ -32,6 +32,8 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import static com.mniip.bananapeel.util.TextEvent.Type.*;
+
 public class IRCServer
 {
 	private IRCService service;
@@ -144,7 +146,7 @@ public class IRCServer
 			}
 			catch(GeneralSecurityException e)
 			{
-				serverTab.putLine(new TextEvent(TextEvent.ERROR, e.toString()));
+				serverTab.putLine(new TextEvent(ERROR, e.toString()));
 				Log.d("BananaPeel", "", e);
 				return;
 			}
@@ -186,7 +188,7 @@ public class IRCServer
 		for(Tab tab : service.tabs)
 			if(tab.getServerTab() == getTab())
 			{
-				tab.putLine(new TextEvent(TextEvent.ERROR, e.toString()));
+				tab.putLine(new TextEvent(ERROR, e.toString()));
 				Log.d("BananaPeel", "", e);
 			}
 		connection = null;
@@ -499,7 +501,7 @@ public class IRCServer
 				srv.getService().changeNickList(tab);
 			}
 			if(tab != null)
-				tab.putLine(new TextEvent(TextEvent.JOIN, nick, msg.getUserHost(), channel));
+				tab.putLine(new TextEvent(JOIN, nick, msg.getUserHost(), channel));
 			return tab != null;
 		}
 
@@ -533,7 +535,7 @@ public class IRCServer
 				String modes = mode;
 				for(int i = 2; i < msg.args.length; i++)
 					modes += " " + msg.args[i];
-				tab.putLine(new TextEvent(TextEvent.MODE_CHANGE, from, channel, modes));
+				tab.putLine(new TextEvent(MODE_CHANGE, from, channel, modes));
 				if(changed)
 					srv.getService().changeNickList(tab);
 			}
@@ -549,7 +551,7 @@ public class IRCServer
 			if(srv.config.nickCollator.equals(from, srv.ourNick))
 			{
 				srv.ourNick = to;
-				srv.getTab().putLine(new TextEvent(TextEvent.NICK_CHANGE, from, to));
+				srv.getTab().putLine(new TextEvent(NICK_CHANGE, from, to));
 				seen = true;
 			}
 			for(Tab tab : srv.getService().tabs)
@@ -562,7 +564,7 @@ public class IRCServer
 							entry.nick = to;
 							tab.nickList.setOrdered(i, entry);
 							srv.getService().changeNickList(tab);
-							tab.putLine(new TextEvent(TextEvent.NICK_CHANGE, from, to));
+							tab.putLine(new TextEvent(NICK_CHANGE, from, to));
 							seen = true;
 							break;
 						}
@@ -582,9 +584,9 @@ public class IRCServer
 				if(tab != null)
 					srv.getService().deleteTab(tab.getId());
 				if(reason == null)
-					srv.getTab().putLine(new TextEvent(TextEvent.PART, nick, msg.getUserHost(), channel));
+					srv.getTab().putLine(new TextEvent(PART, nick, msg.getUserHost(), channel));
 				else
-					srv.getTab().putLine(new TextEvent(TextEvent.PART_WITH_REASON, nick, msg.getUserHost(), channel, reason));
+					srv.getTab().putLine(new TextEvent(PART_WITH_REASON, nick, msg.getUserHost(), channel, reason));
 				return true;
 			}
 			else
@@ -603,9 +605,9 @@ public class IRCServer
 					{
 						srv.getService().changeNickList(tab);
 						if(reason == null)
-							tab.putLine(new TextEvent(TextEvent.PART, nick, msg.getUserHost(), channel));
+							tab.putLine(new TextEvent(PART, nick, msg.getUserHost(), channel));
 						else
-							tab.putLine(new TextEvent(TextEvent.PART_WITH_REASON, nick, msg.getUserHost(), channel, reason));
+							tab.putLine(new TextEvent(PART_WITH_REASON, nick, msg.getUserHost(), channel, reason));
 					}
 				}
 			return tab != null;
@@ -635,21 +637,21 @@ public class IRCServer
 					Tab tab = srv.getService().findTab(srv.getTab(), nick);
 					if(tab == null)
 						tab = srv.getService().createTab(srv.getTab(), nick);
-					tab.putLine(new TextEvent(TextEvent.CTCP_ACTION, nick, args));
+					tab.putLine(new TextEvent(CTCP_ACTION, nick, args));
 					return true;
 				}
 				else
 				{
 					Tab tab = srv.getService().findTab(srv.getTab(), target);
 					if(tab != null)
-						tab.putLine(new TextEvent(TextEvent.CTCP_ACTION, nick, args));
+						tab.putLine(new TextEvent(CTCP_ACTION, nick, args));
 					return tab != null;
 				}
 
 			if(srv.config.nickCollator.equals(target, srv.ourNick))
-				srv.service.getFrontTab().putLine(new TextEvent(TextEvent.CTCP_PRIVATE, nick, command, args));
+				srv.service.getFrontTab().putLine(new TextEvent(CTCP_PRIVATE, nick, command, args));
 			else
-				srv.service.getFrontTab().putLine(new TextEvent(TextEvent.CTCP_CHANNEL, nick, command, args, target));
+				srv.service.getFrontTab().putLine(new TextEvent(CTCP_CHANNEL, nick, command, args, target));
 
 			if(command.equalsIgnoreCase("VERSION"))
 				sendCTCPReply(srv, nick, "VERSION " + srv.service.getString(R.string.app_name));
@@ -674,14 +676,14 @@ public class IRCServer
 				Tab tab = srv.getService().findTab(srv.getTab(), nick);
 				if(tab == null)
 					tab = srv.getService().createTab(srv.getTab(), nick);
-				tab.putLine(new TextEvent(TextEvent.MESSAGE, nick, text));
+				tab.putLine(new TextEvent(MESSAGE, nick, text));
 				return true;
 			}
 			else
 			{
 				Tab tab = srv.getService().findTab(srv.getTab(), target);
 				if(tab != null)
-					tab.putLine(new TextEvent(TextEvent.MESSAGE, nick, text));
+					tab.putLine(new TextEvent(MESSAGE, nick, text));
 				return tab != null;
 			}
 		}
@@ -709,9 +711,9 @@ public class IRCServer
 						seen = true;
 						srv.getService().changeNickList(tab);
 						if(reason == null)
-							tab.putLine(new TextEvent(TextEvent.QUIT, nick, msg.getUserHost()));
+							tab.putLine(new TextEvent(QUIT, nick, msg.getUserHost()));
 						else
-							tab.putLine(new TextEvent(TextEvent.QUIT_WITH_REASON, nick, msg.getUserHost(), reason));
+							tab.putLine(new TextEvent(QUIT_WITH_REASON, nick, msg.getUserHost(), reason));
 					}
 				}
 			return seen;
@@ -728,10 +730,10 @@ public class IRCServer
 						args += " ";
 					args += msg.args[i];
 				}
-				srv.getTab().putLine(new TextEvent(TextEvent.NUMERIC, msg.command, args));
+				srv.getTab().putLine(new TextEvent(NUMERIC, msg.command, args));
 			}
 			else
-				srv.getTab().putLine(new TextEvent(TextEvent.RAW, msg.toIRC()));
+				srv.getTab().putLine(new TextEvent(RAW, msg.toIRC()));
 		}
 	}
 }

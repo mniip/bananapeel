@@ -148,7 +148,7 @@ public class IRCService extends Service
 				if(t.getServerTab().server != null)
 				{
 					t.getServerTab().server.send(new IRCMessage("PRIVMSG", t.getTitle(), str));
-					t.putLine(new TextEvent(TextEvent.MESSAGE, t.getServerTab().server.ourNick, str));
+					t.putLine(new TextEvent(TextEvent.Type.OUR_MESSAGE, t.getServerTab().server.ourNick, str));
 				}
 		}
 	}
@@ -217,6 +217,13 @@ public class IRCService extends Service
 				srv.setPreferences(preferences);
 				srv.connect();
 			}
+		}
+
+		@ClientCommandHandler.Hook
+		private static void commandME(Tab tab, List<String> words, List<String> wordEols)
+		{
+			tab.getServerTab().server.send(new IRCMessage("PRIVMSG", tab.getTitle(), "\001ACTION " + wordEols.get(1) + "\001"));
+			tab.putLine(new TextEvent(TextEvent.Type.OUR_CTCP_ACTION, tab.getServerTab().server.ourNick, wordEols.get(1)));
 		}
 
 		private static void unhandledCommand(Tab tab, String command, List<String> words, List<String> wordEols)

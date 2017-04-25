@@ -18,7 +18,6 @@ import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.mniip.bananapeel.service.IRCServer;
 import com.mniip.bananapeel.service.IRCService;
 import com.mniip.bananapeel.util.NickListEntry;
 import com.mniip.bananapeel.R;
@@ -119,13 +118,13 @@ public class MainScreen extends FragmentActivity
 		@Override
 		public Object getItem(int position)
 		{
-			return getService().getFrontTab().nickList.get(position);
+			return getService().getFrontTab().nickList.getSecondary(position);
 		}
 
 		@Override
 		public long getItemId(int position)
 		{
-			return getService().getFrontTab().nickList.get(position).hashCode();
+			return getService().getFrontTab().nickList.getSecondary(position).hashCode();
 		}
 
 		@Override
@@ -144,7 +143,7 @@ public class MainScreen extends FragmentActivity
 				});
 			}
 
-			NickListEntry entry = getService().getFrontTab().nickList.get(position);
+			NickListEntry entry = getService().getFrontTab().nickList.getSecondary(position);
 			((TextView)convertView).setText((entry.highestStatus == null ? "" : entry.highestStatus.toString()) + entry.nick);
 			return convertView;
 		}

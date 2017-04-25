@@ -1,9 +1,8 @@
 package com.mniip.bananapeel.service;
 
 import com.mniip.bananapeel.ui.IRCInterfaceListener;
-import com.mniip.bananapeel.util.Collators;
+import com.mniip.bananapeel.util.BiSet;
 import com.mniip.bananapeel.util.NickListEntry;
-import com.mniip.bananapeel.util.OrderedList;
 import com.mniip.bananapeel.util.TextEvent;
 
 import java.util.ArrayList;
@@ -15,7 +14,7 @@ public class Tab
 	private IRCService service;
 	private int id;
 	private String title;
-	public OrderedList<NickListEntry> nickList;
+	public BiSet<NickListEntry> nickList;
 	private List<TextEvent> textLines = new ArrayList<>();
 
 	public Tab(IRCService service, ServerTab serverTab, int id, String title)

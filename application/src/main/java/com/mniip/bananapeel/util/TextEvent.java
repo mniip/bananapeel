@@ -47,7 +47,7 @@ public class TextEvent
 
 	public TextEvent(Date timestamp, Type type, String... args)
 	{
-		this.timestamp = timestamp;
+		this.timestamp = timestamp == null ? new Date() : timestamp;
 		this.type = type;
 		this.args = args;
 	}

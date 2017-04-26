@@ -21,6 +21,8 @@ import java.lang.reflect.Method;
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -455,7 +457,7 @@ public class IRCServer
 
 				String request = "";
 
-				List<String> wantCaps = new ArrayList<>(Arrays.asList("account-notify", "extended-join", "multi-prefix"));
+				List<String> wantCaps = new ArrayList<>(Arrays.asList("account-notify", "extended-join", "multi-prefix", "server-time", "znc.in/server-time", "znc.in/server-time-iso"));
 				if(srv.preferences.getAuthMode().equals("sasl"))
 					wantCaps.add("sasl");
 				for(String cap : wantCaps)
@@ -662,6 +664,23 @@ public class IRCServer
 			String nick = msg.getNick();
 			String target = msg.args[0];
 			String text = msg.args[1];
+
+			Date time = null;
+			if(srv.config.capsEnabled.contains("znc.in/server-time-iso") || srv.config.capsEnabled.contains("server-time"))
+				if(msg.tags != null && msg.tags.get("time") != null)
+					try
+					{
+						time = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(msg.tags.get("time"));
+					}
+					catch(ParseException e) {}
+			if(srv.config.capsEnabled.contains("znc.in/server-time"))
+				if(msg.tags != null && msg.tags.get("t") != null)
+					try
+					{
+						time = new Date(Long.valueOf(msg.tags.get("t")) * 1000);
+					}
+					catch(NumberFormatException e) {}
+
 			if(text.length() >= 2 && text.charAt(0) == '\001' && text.charAt(text.length() - 1) == '\001')
 				return onCTCP(srv, nick, target, text.substring(1, text.length() - 1));
 			else if(srv.config.nickCollator.equals(target, srv.ourNick))
@@ -669,14 +688,14 @@ public class IRCServer
 				Tab tab = srv.getService().findTab(srv.getTab(), nick);
 				if(tab == null)
 					tab = srv.getService().createTab(srv.getTab(), nick);
-				tab.putLine(new TextEvent(MESSAGE, nick, text));
+				tab.putLine(new TextEvent(time, MESSAGE, nick, text));
 				return true;
 			}
 			else
 			{
 				Tab tab = srv.getService().findTab(srv.getTab(), target);
 				if(tab != null)
-					tab.putLine(new TextEvent(MESSAGE, nick, text));
+					tab.putLine(new TextEvent(time, MESSAGE, nick, text));
 				return tab != null;
 			}
 		}

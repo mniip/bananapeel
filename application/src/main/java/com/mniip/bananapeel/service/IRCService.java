@@ -13,15 +13,13 @@ import com.mniip.bananapeel.R;
 import com.mniip.bananapeel.ServiceApplication;
 import com.mniip.bananapeel.ui.MainScreen;
 import com.mniip.bananapeel.ui.IRCInterfaceListener;
+import com.mniip.bananapeel.util.Hook;
 import com.mniip.bananapeel.util.IRCMessage;
 import com.mniip.bananapeel.util.IntMap;
 import com.mniip.bananapeel.util.TextEvent;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class IRCService extends Service
@@ -175,60 +173,72 @@ public class IRCService extends Service
 		while(idx != -1);
 
 		if(words.size() > 0)
-			ClientCommandHandler.handle(tab, words.get(0), words, wordEols);
+			commandHandler.invoke(tab, new CommandData(words, wordEols));
 	}
 
-	public static class ClientCommandHandler
+	private class CommandData
 	{
-		@Retention(RetentionPolicy.RUNTIME)
-		private @interface Hook { }
-
-		public static void handle(Tab tab, String command, List<String> words, List<String> wordEols)
+		private CommandData(List<String> words, List<String> wordEols)
 		{
-			String methodName = "command" + command.toUpperCase();
-			try
-			{
-				Method m = ClientCommandHandler.class.getDeclaredMethod(methodName, Tab.class, List.class, List.class);
-				if(m.getAnnotation(Hook.class) != null)
-					m.invoke(null, tab, words, wordEols);
-			}
-			catch(NoSuchMethodException e)
-			{
-				unhandledCommand(tab, command, words, wordEols);
-			}
-			catch(IllegalAccessException e) { }
-			catch(InvocationTargetException e)
-			{
-				if(e.getCause() instanceof RuntimeException)
-					throw (RuntimeException)e.getCause();
-			}
+			this.words = words;
+			this.wordEols = wordEols;
 		}
 
-		@ClientCommandHandler.Hook
-		private static void commandSERVER(Tab tab, List<String> words, List<String> wordEols)
+		private final List<String> words;
+		private final List<String> wordEols;
+	}
+
+	abstract private static class Command implements Hook<Tab, CommandData> {}
+
+	private static Hook.Binned<String, Tab, CommandData> commandBins = new Hook.Binned<String, Tab, CommandData>()
+	{
+		public String resolve(CommandData data)
 		{
-			if(words.size() >= 1)
+			if(data.words.size() > 0)
+				return data.words.get(0).toUpperCase();
+			return "";
+		}
+	};
+
+	private static Command rawHook = new Command()
+	{
+		public boolean invoke(Tab tab, CommandData data)
+		{
+			tab.getServerTab().server.send(IRCMessage.fromIRC(data.wordEols.get(0)));
+			return true;
+		}
+	};
+
+	private static Hook<Tab, CommandData> commandHandler = new Hook.Sequence<>(Arrays.asList(commandBins, rawHook));
+
+	static
+	{
+		commandBins.add("SERVER", new Command()
+		{
+			public boolean invoke(Tab tab, CommandData data)
 			{
-				String server = words.get(1);
-				IRCServerPreferences preferences = tab.getService().preferences.getServer(server);
-				if(preferences == null)
-					preferences = new IRCServerPreferences.Dummy(words.get(1), tab.getService().preferences, words.get(1), 6667);
-				IRCServer srv = tab.getServerTab().server;
-				srv.setPreferences(preferences);
-				srv.connect();
+				if(data.words.size() >= 1)
+				{
+					String server = data.words.get(1);
+					IRCServerPreferences preferences = tab.getService().preferences.getServer(server);
+					if(preferences == null)
+						preferences = new IRCServerPreferences.Dummy(data.words.get(1), tab.getService().preferences, data.words.get(1), 6667);
+					IRCServer srv = tab.getServerTab().server;
+					srv.setPreferences(preferences);
+					srv.connect();
+				}
+				return true;
 			}
-		}
+		});
 
-		@ClientCommandHandler.Hook
-		private static void commandME(Tab tab, List<String> words, List<String> wordEols)
+		commandBins.add("ME", new Command()
 		{
-			tab.getServerTab().server.send(new IRCMessage("PRIVMSG", tab.getTitle(), "\001ACTION " + wordEols.get(1) + "\001"));
-			tab.putLine(new TextEvent(TextEvent.Type.OUR_CTCP_ACTION, tab.getServerTab().server.ourNick, wordEols.get(1)));
-		}
-
-		private static void unhandledCommand(Tab tab, String command, List<String> words, List<String> wordEols)
-		{
-			tab.getServerTab().server.send(IRCMessage.fromIRC(wordEols.get(0)));
-		}
+			public boolean invoke(Tab tab, CommandData data)
+			{
+				tab.getServerTab().server.send(new IRCMessage("PRIVMSG", tab.getTitle(), "\001ACTION " + data.wordEols.get(1) + "\001"));
+				tab.putLine(new TextEvent(TextEvent.Type.OUR_CTCP_ACTION, tab.getServerTab().server.ourNick, data.wordEols.get(1)));
+				return true;
+			}
+		});
 	}
 }

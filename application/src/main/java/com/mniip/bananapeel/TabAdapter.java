@@ -1,7 +1,10 @@
 package com.mniip.bananapeel;
 
+import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.PagerAdapter;
 import android.util.Log;
@@ -197,4 +200,44 @@ public class TabAdapter extends PagerAdapter
         else
             return tabIds.size();
     }
+
+    @Override
+    public Parcelable saveState()
+    {
+        for(IntMap.KV<TabFragment> kv : tabFragments.pairs())
+        {
+            TabFragment fragment = kv.getValue();
+            if(curTransaction == null)
+                curTransaction = fragmentManager.beginTransaction();
+            savedStates.set(getItemPosition(fragment), fragment.isAdded() ? fragmentManager.saveFragmentInstanceState(fragment) : null);
+            curTransaction.remove(fragment);
+            tabFragments.remove(fragment.getTabId());
+        }
+        Bundle state = new Bundle();
+        Fragment.SavedState[] fss = new Fragment.SavedState[savedStates.size()];
+        savedStates.toArray(fss);
+        state.putParcelableArray("states", fss);
+        return state;
+    }
+
+    @Override
+    public void restoreState(Parcelable state, ClassLoader loader)
+    {
+        if(state != null)
+        {
+            Bundle bundle = (Bundle)state;
+            bundle.setClassLoader(loader);
+            Parcelable[] fss = bundle.getParcelableArray("states");
+            savedStates.clear();
+            tabFragments.clear();
+            if(fss != null)
+            {
+                for(int i = 0; i < fss.length; i++)
+                {
+                    savedStates.add((Fragment.SavedState)fss[i]);
+                }
+            }
+        }
+    }
+
 }

@@ -14,6 +14,7 @@
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:id="@+id/pager_container"
+            android:saveEnabled="false"
             android:layout_height="match_parent">
 
         </LinearLayout>

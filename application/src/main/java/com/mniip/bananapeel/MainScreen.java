@@ -24,6 +24,8 @@ public class MainScreen extends FragmentActivity
 	private TabAdapter tabAdapter;
 	private NickListAdapter nickListAdapter;
 
+	Bundle mSavedInstanceState;
+
 	public TabAdapter getTabAdapter()
 	{
 		return tabAdapter;
@@ -89,7 +91,8 @@ public class MainScreen extends FragmentActivity
 
 			ViewPager pager = (ViewPager)group.findViewById(R.id.view_pager);
 			tabAdapter = new TabAdapter(getSupportFragmentManager(), MainScreen.this, getService());
-			pager.onRestoreInstanceState(getIntent().getParcelableExtra(((Integer)R.id.view_pager).toString()));
+			if (mSavedInstanceState != null)
+				pager.onRestoreInstanceState(mSavedInstanceState.getParcelable(((Integer)R.id.view_pager).toString()));
 			pager.setAdapter(tabAdapter);
 		}
 
@@ -167,6 +170,7 @@ public class MainScreen extends FragmentActivity
 		Nparams.width = width;
 		nickList.setLayoutParams(Nparams);
 
+		mSavedInstanceState = savedInstanceState;
 	}
 
 	@Override
@@ -181,13 +185,13 @@ public class MainScreen extends FragmentActivity
 	@Override
 	public void onSaveInstanceState(Bundle savedInstanceState)
 	{
+		super.onSaveInstanceState(savedInstanceState);
 		ViewPager pager = (ViewPager)findViewById(R.id.view_pager);
 		if (pager != null)
 		{
-			getIntent().putExtra(((Integer)R.id.view_pager).toString(), pager.onSaveInstanceState());
+			savedInstanceState.putParcelable(((Integer)R.id.view_pager).toString(), pager.onSaveInstanceState());
 		}
 
-		super.onSaveInstanceState(savedInstanceState);
 	}
 
 

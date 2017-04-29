@@ -1,26 +1,21 @@
 package com.mniip.bananapeel.service;
 
-import android.util.Log;
-
 import com.mniip.bananapeel.util.IRCMessage;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ReceiverThread extends Thread
 {
 	private IRCConnection server;
-	private AtomicBoolean hadError;
 	private Socket socket;
 
-	public ReceiverThread(IRCConnection server, Socket socket, AtomicBoolean hadError)
+	public ReceiverThread(IRCConnection server, Socket socket)
 	{
 		this.server = server;
 		this.socket = socket;
-		this.hadError = hadError;
 	}
 
 	@Override
@@ -53,10 +48,7 @@ public class ReceiverThread extends Thread
 		}
 		catch(IOException e)
 		{
-			if(hadError.compareAndSet(false, true))
-				server.onError(e);
-			else
-				Log.d("BananaPeel", "ignored", e);
+			server.onError(e);
 		}
 	}
 }

@@ -2,7 +2,6 @@ package com.mniip.bananapeel.service;
 
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 
 import com.mniip.bananapeel.util.IRCMessage;
 
@@ -25,6 +24,7 @@ public class IRCConnection
 	{
 		this.server = server;
 		this.factory = factory;
+		hadError = new AtomicBoolean(false);
 	}
 
 	public IRCServer getServer()
@@ -34,8 +34,6 @@ public class IRCConnection
 
 	public void connect(String hostname, int port)
 	{
-		hadError = new AtomicBoolean(false);
-
 		try
 		{
 			socket = factory.createSocket();
@@ -45,13 +43,13 @@ public class IRCConnection
 			return;
 		}
 
-		sender = new SenderThread(this, socket, hadError, hostname, port);
+		sender = new SenderThread(this, socket, hostname, port);
 		sender.start();
 	}
 
 	public void onConnected()
 	{
-		receiver = new ReceiverThread(this, socket, hadError);
+		receiver = new ReceiverThread(this, socket);
 		receiver.start();
 		new Handler(Looper.getMainLooper()).post(new Runnable()
 		{
@@ -75,18 +73,29 @@ public class IRCConnection
 		});
 	}
 
+	private Runnable closeBackground = new Runnable()
+	{
+		public void run()
+		{
+			try
+			{
+				socket.close();
+			}
+			catch(IOException ee)
+			{
+			}
+		}
+	};
+
 	public void onError(final Exception e)
 	{
-		sender.interrupt();
-		if(receiver != null)
-			receiver.interrupt();
+		if(hadError.compareAndSet(false, true))
+		{
+			sender.interrupt();
+			if(receiver != null)
+				receiver.interrupt();
 
-		try
-		{
-			socket.close();
-		}
-		catch(IOException ee)
-		{
+			new Thread(closeBackground).start();
 		}
 
 		sender = null;
@@ -110,13 +119,7 @@ public class IRCConnection
 		if(receiver != null)
 			receiver.interrupt();
 
-		try
-		{
-			socket.close();
-		}
-		catch(IOException ee)
-		{
-		}
+		new Thread(closeBackground).start();
 
 		sender = null;
 		receiver = null;

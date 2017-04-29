@@ -185,10 +185,8 @@ public class IRCServer
 	{
 		for(Tab tab : service.tabs)
 			if(tab.getServerTab() == getTab())
-			{
 				tab.putLine(new TextEvent(ERROR, e.toString()));
-				Log.d("BananaPeel", "", e);
-			}
+		Log.d("BananaPeel", "", e);
 		connection = null;
 		reconnect = new Reconnect(this);
 		new Handler(Looper.getMainLooper()).postDelayed(reconnect, 5000);

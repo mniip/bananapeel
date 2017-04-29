@@ -25,12 +25,17 @@ public class TabFragment extends Fragment
     private TextLineAdapter adapter;
     private RecyclerView recycler;
 
+    private EditText inputText;
 
     public void setTabId(int tabId)
     {
         this.tabId = tabId;
     }
 
+    public EditText getInputText()
+    {
+        return inputText;
+    }
     public int getTabId()
     {
         return tabId;
@@ -82,8 +87,8 @@ public class TabFragment extends Fragment
             }
         });
 
-        EditText text = (EditText)view.findViewById(R.id.input_box);
-        text.setOnEditorActionListener(new TextView.OnEditorActionListener()
+        inputText = (EditText)view.findViewById(R.id.input_box);
+        inputText.setOnEditorActionListener(new TextView.OnEditorActionListener()
         {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event)

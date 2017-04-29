@@ -14,7 +14,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -142,17 +144,7 @@ public class MainScreen extends FragmentActivity
 		public View getView(int position, View convertView, ViewGroup parent)
 		{
 			if(convertView == null)
-			{
 				convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.nick_line, parent, false);
-				convertView.setOnClickListener(new TextView.OnClickListener()
-				{
-					@Override
-					public void onClick(View v)
-					{
-
-					}
-				});
-			}
 
 			NickListEntry entry = getService().getFrontTab().nickList.getSecondary(position);
 			((TextView)convertView).setText((entry.highestStatus == null ? "" : entry.highestStatus.toString()) + entry.nick);
@@ -196,6 +188,22 @@ public class MainScreen extends FragmentActivity
 		channelList.setLayoutParams(sParams);
 
 		ListView nickList = (ListView)findViewById(R.id.nick_list);
+
+		nickList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener()
+		{
+			@Override
+			public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id)
+			{
+				String nick = ((TextView)view).getText().toString();
+				EditText inputText = tabAdapter.getCurTab().getInputText();
+				int start = Math.max(inputText.getSelectionStart(), 0);
+				int end = Math.max(inputText.getSelectionEnd(), 0);
+				nick += (start == 0 && end == 0)? ", " : " ";
+				inputText.getText().replace(Math.min(start, end), Math.max(start, end), nick, 0, nick.length());
+				return true;
+			}
+		});
+
 		nickListAdapter = new NickListAdapter();
 		nickList.setAdapter(nickListAdapter);
 		DrawerLayout.LayoutParams Nparams = (DrawerLayout.LayoutParams) nickList.getLayoutParams();// android.support.v4.widget.

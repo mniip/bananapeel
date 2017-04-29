@@ -23,6 +23,7 @@ public class TabAdapter extends PagerAdapter
     private IRCService service;
     private MainScreen mainScreen;
 
+    private TabFragment curTab;
     private IntMap<Integer> tabPositions = new IntMap<>();
     private ArrayList<Integer> tabIds = new ArrayList<>();
     private IntMap<TabFragment> tabFragments = new IntMap<>();
@@ -30,6 +31,11 @@ public class TabAdapter extends PagerAdapter
 
     private final FragmentManager fragmentManager;
     private FragmentTransaction curTransaction;
+
+    public TabFragment getCurTab()
+    {
+        return curTab;
+    }
 
     public TabAdapter(FragmentManager fm, MainScreen mScreen, IRCService service)
     {
@@ -119,6 +125,7 @@ public class TabAdapter extends PagerAdapter
                 drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, nickList);
             mainScreen.getNickListAdapter().notifyDataSetChanged();
         }
+        curTab = (TabFragment)object;
     }
 
     public void setService(IRCService service)

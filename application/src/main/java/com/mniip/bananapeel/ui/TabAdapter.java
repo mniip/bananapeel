@@ -1,7 +1,10 @@
 package com.mniip.bananapeel.ui;
 
+import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.widget.DrawerLayout;
@@ -28,24 +31,29 @@ public class TabAdapter extends PagerAdapter
     private final FragmentManager fragmentManager;
     private FragmentTransaction curTransaction;
 
-    public TabAdapter(FragmentManager fragmentManager, MainScreen mainScreen)
+    public TabAdapter(FragmentManager fm, MainScreen mScreen, IRCService service)
     {
         super();
-        this.fragmentManager = fragmentManager;
-        this.mainScreen = mainScreen;
+        fragmentManager = fm;
+        mainScreen = mScreen;
+        setService(service);
     }
 
     public boolean isViewFromObject(View view, Object object)
     {
-        return ((Fragment)object).getView() == view;
+        if(object instanceof Fragment)
+            return ((Fragment)object).getView() == view;
+        else return object == view;
     }
 
     @Override
     public Object instantiateItem(ViewGroup container, int position)
     {
+        if(service == null)
+            return new View(mainScreen);
         int tabId = tabIds.get(position);
         TabFragment fragment = tabFragments.get(tabId);
-        if (fragment == null)
+        if(fragment == null)
         {
             Fragment.SavedState fss = savedStates.get(position);
             fragment = new TabFragment();
@@ -54,6 +62,7 @@ public class TabAdapter extends PagerAdapter
             if(curTransaction == null)
                 curTransaction = fragmentManager.beginTransaction();
             curTransaction.add(container.getId(), fragment);
+            tabFragments.put(tabId, fragment);
         }
         return fragment;
     }
@@ -61,26 +70,33 @@ public class TabAdapter extends PagerAdapter
     @Override
     public void destroyItem(ViewGroup container, int position, Object object)
     {
-        TabFragment fragment = (TabFragment)object;
-
-        if (curTransaction == null)
-            curTransaction = fragmentManager.beginTransaction();
-        if(fragment.isActive())
-            savedStates.set(position, fragment.isAdded() ? fragmentManager.saveFragmentInstanceState(fragment) : null);
-        curTransaction.remove(fragment);
+        if(object instanceof Fragment)
+        {
+            TabFragment fragment = (TabFragment)object;
+            if(curTransaction == null)
+                curTransaction = fragmentManager.beginTransaction();
+            if(fragment.isActive())
+                savedStates.set(position, fragment.isAdded() ? fragmentManager.saveFragmentInstanceState(fragment) : null);
+            curTransaction.remove(fragment);
+            tabFragments.remove(fragment.getTabId());
+        }
     }
 
     @Override
     public int getItemPosition(Object object)
     {
-        Integer pos = tabPositions.get(((TabFragment)object).getTabId());
-        return pos == null ? POSITION_NONE : pos;
+        if(object instanceof Fragment)
+        {
+            Integer pos = tabPositions.get(((TabFragment)object).getTabId());
+            return pos == null ? POSITION_NONE : pos;
+        }
+        return service == null ? POSITION_UNCHANGED : POSITION_NONE;
     }
 
     @Override
     public void finishUpdate(ViewGroup container)
     {
-        if (curTransaction != null)
+        if(curTransaction != null)
         {
             curTransaction.commitNowAllowingStateLoss();
             curTransaction = null;
@@ -113,16 +129,6 @@ public class TabAdapter extends PagerAdapter
 
         for(IntMap.KV<Tab> kv : service.tabs.pairs())
             onTabAdded(kv.getKey());
-    }
-
-    public void onTabViewCreated(TabFragment view, int tabId)
-    {
-        tabFragments.put(tabId, view);
-    }
-
-    public void onTabViewDestroyed(int tabId)
-    {
-        tabFragments.delete(tabId);
     }
 
     public void onTabLinesAdded(int tabId)
@@ -166,7 +172,7 @@ public class TabAdapter extends PagerAdapter
     public void onTabRemoved(int tabId)
     {
         Integer tabPos = tabPositions.get(tabId);
-        if (tabPos != null)
+        if(tabPos != null)
         {
             TabFragment fragment = tabFragments.get(tabId);
             if(fragment != null)
@@ -189,15 +195,61 @@ public class TabAdapter extends PagerAdapter
     @Override
     public String getPageTitle(int position)
     {
+        if(service == null)
+            return mainScreen.getText(R.string.app_name).toString();
         Integer tabId = tabIds.get(position);
-        if (tabId != null)
+        if(tabId != null)
             return service.tabs.get(tabId).getTitle();
-        else return "";
+        else
+            return "";
     }
 
     @Override
     public int getCount()
     {
-        return tabIds.size();
+        if(service == null)
+            return 1;
+        else
+            return tabIds.size();
     }
+
+    @Override
+    public Parcelable saveState()
+    {
+        for(IntMap.KV<TabFragment> kv : tabFragments.pairs())
+        {
+            TabFragment fragment = kv.getValue();
+            if(curTransaction == null)
+                curTransaction = fragmentManager.beginTransaction();
+            savedStates.set(getItemPosition(fragment), fragment.isAdded() ? fragmentManager.saveFragmentInstanceState(fragment) : null);
+            curTransaction.remove(fragment);
+            tabFragments.remove(fragment.getTabId());
+        }
+        Bundle state = new Bundle();
+        Fragment.SavedState[] fss = new Fragment.SavedState[savedStates.size()];
+        savedStates.toArray(fss);
+        state.putParcelableArray("states", fss);
+        return state;
+    }
+
+    @Override
+    public void restoreState(Parcelable state, ClassLoader loader)
+    {
+        if(state != null)
+        {
+            Bundle bundle = (Bundle)state;
+            bundle.setClassLoader(loader);
+            Parcelable[] fss = bundle.getParcelableArray("states");
+            savedStates.clear();
+            tabFragments.clear();
+            if(fss != null)
+            {
+                for(int i = 0; i < fss.length; i++)
+                {
+                    savedStates.add((Fragment.SavedState)fss[i]);
+                }
+            }
+        }
+    }
+
 }

@@ -28,6 +28,8 @@ public class MainScreen extends FragmentActivity
 	private TabAdapter tabAdapter;
 	private NickListAdapter nickListAdapter;
 
+	Bundle mSavedInstanceState;
+
 	public TabAdapter getTabAdapter()
 	{
 		return tabAdapter;
@@ -88,7 +90,16 @@ public class MainScreen extends FragmentActivity
 		{
 			IRCService service = getService();
 			service.setListener(ircInterfaceListener);
-			tabAdapter.setService(service);
+
+			ViewGroup group = (ViewGroup)findViewById(R.id.pager_container);
+			LayoutInflater.from(MainScreen.this).inflate(R.layout.pager, group, true);
+
+			ViewPager pager = (ViewPager)group.findViewById(R.id.view_pager);
+			tabAdapter = new TabAdapter(getSupportFragmentManager(), MainScreen.this, service);
+			if (mSavedInstanceState != null)
+				pager.onRestoreInstanceState(mSavedInstanceState.getParcelable(((Integer)R.id.view_pager).toString()));
+			pager.setAdapter(tabAdapter);
+
 			if (service.getFrontTab().nickList != null)
 			{
 				View nickList = (View)findViewById(R.id.nick_list);
@@ -194,9 +205,7 @@ public class MainScreen extends FragmentActivity
 		DrawerLayout drawerLayout = (DrawerLayout)findViewById(R.id.drawerLayout);
 		drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, nickList);
 
-		ViewPager pager = (ViewPager)findViewById(R.id.view_pager);
-		tabAdapter = new TabAdapter(getSupportFragmentManager(), this);
-		pager.setAdapter(tabAdapter);
+		mSavedInstanceState = savedInstanceState;
 	}
 
 	@Override
@@ -207,6 +216,19 @@ public class MainScreen extends FragmentActivity
 
 		unbindService(conn);
 	}
+
+	@Override
+	public void onSaveInstanceState(Bundle savedInstanceState)
+	{
+		super.onSaveInstanceState(savedInstanceState);
+		ViewPager pager = (ViewPager)findViewById(R.id.view_pager);
+		if (pager != null)
+		{
+			savedInstanceState.putParcelable(((Integer)R.id.view_pager).toString(), pager.onSaveInstanceState());
+		}
+
+	}
+
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu)

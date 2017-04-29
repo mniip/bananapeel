@@ -49,6 +49,7 @@ public class TabFragment extends Fragment
     @Override
     public void onSaveInstanceState(Bundle out)
     {
+        Log.d("BananaPeel","fragment.onSaveInstanceState");
         super.onSaveInstanceState(out);
         out.putInt("tabId", tabId);
     }
@@ -61,7 +62,6 @@ public class TabFragment extends Fragment
             tabId = savedInstanceState.getInt("tabId");
             sticky = savedInstanceState.getBoolean("sticky");
         }
-        ((MainScreen)getActivity()).getTabAdapter().onTabViewCreated(this, tabId);
 
         View view = inflater.inflate(R.layout.tab_fragment, parent, false);
 
@@ -121,14 +121,6 @@ public class TabFragment extends Fragment
     {
         ServiceApplication.getService().onTextEntered(tabId, v.getText().toString());
         v.setText("");
-    }
-
-    @Override
-    public void onDestroyView()
-    {
-        ((MainScreen)getActivity()).getTabAdapter().onTabViewDestroyed(tabId);
-
-        super.onDestroyView();
     }
 
     public void onLinesAdded()

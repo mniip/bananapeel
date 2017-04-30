@@ -33,15 +33,43 @@ public class ServerListPreferencesScreen extends PreferenceActivity
 
 		setPreferenceScreen(getPreferenceManager().createPreferenceScreen(this));
 
-		Preference addButton = new Preference(this);
+		final Preference addButton = new Preference(this);
 		addButton.setTitle("Add server");
+
 		addButton.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener()
 		{
 			@Override
 			public boolean onPreferenceClick(Preference preference)
 			{
-				preferences.newServer(getUniqueName());
-				updateServers();
+				AlertDialog.Builder builder = new AlertDialog.Builder(ServerListPreferencesScreen.this);
+
+				final EditText input = new EditText(ServerListPreferencesScreen.this);
+				input.setInputType(InputType.TYPE_CLASS_TEXT);
+				final String name = getUniqueName();
+				input.setText(name);
+				input.selectAll();
+
+				builder.setView(input);
+				builder.setPositiveButton("Create", new DialogInterface.OnClickListener()
+				{
+					@Override
+					public void onClick(DialogInterface dialog, int which)
+					{
+						final IRCServerPreferences.Concrete server = preferences.newServer(name);
+						server.rename(input.getText().toString());
+						updateServers();
+					}
+				});
+				builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener()
+				{
+					@Override
+					public void onClick(DialogInterface dialog, int which)
+					{
+						dialog.cancel();
+					}
+				});
+
+				builder.show();
 				return true;
 			}
 		});
@@ -51,13 +79,15 @@ public class ServerListPreferencesScreen extends PreferenceActivity
 			public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id)
 			{
 				Object obj = parent.getItemAtPosition(position);
-				if(obj != null && obj instanceof Preference)
+				if(obj != null && obj instanceof Preference && obj!=addButton )
 				{
 					final IRCServerPreferences.Concrete server = preferences.getServer(((Preference)obj).getTitle().toString());
+
 					AlertDialog.Builder builder = new AlertDialog.Builder(ServerListPreferencesScreen.this);
 					final EditText input = new EditText(ServerListPreferencesScreen.this);
 					input.setInputType(InputType.TYPE_CLASS_TEXT);
 					input.setText(server.getName());
+					input.selectAll();
 					builder.setView(input);
 					builder.setPositiveButton("Rename", new DialogInterface.OnClickListener()
 					{
@@ -85,6 +115,7 @@ public class ServerListPreferencesScreen extends PreferenceActivity
 							updateServers();
 						}
 					});
+
 					builder.show();
 					return true;
 				}

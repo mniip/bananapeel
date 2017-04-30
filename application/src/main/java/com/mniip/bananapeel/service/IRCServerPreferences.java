@@ -90,6 +90,8 @@ public abstract class IRCServerPreferences
 		public void rename(String newName)
 		{
 			newName = newName.replace(";", "");
+			if(newName.isEmpty())
+				return;
 			SharedPreferences.Editor editor = preferences.edit();
 			for(Map.Entry<String,?> entry : preferences.getAll().entrySet())
 			{

@@ -1,11 +1,17 @@
 package com.mniip.bananapeel.ui;
 
+import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.util.ArrayMap;
+import android.support.v4.util.SimpleArrayMap;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
@@ -21,9 +27,13 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.mniip.bananapeel.service.IRCService;
+import com.mniip.bananapeel.service.Tab;
 import com.mniip.bananapeel.util.NickListEntry;
 import com.mniip.bananapeel.R;
 import com.mniip.bananapeel.ServiceApplication;
+
+import java.util.HashMap;
+import java.util.Set;
 
 public class MainScreen extends FragmentActivity
 {
@@ -187,7 +197,46 @@ public class MainScreen extends FragmentActivity
 		sParams.width = width;
 		channelList.setLayoutParams(sParams);
 
-		ListView nickList = (ListView)findViewById(R.id.nick_list);
+		final ListView nickList = (ListView)findViewById(R.id.nick_list);
+
+		nickList.setOnItemClickListener(new AdapterView.OnItemClickListener()
+		{
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view, int position, long id)
+			{
+				final String nick = ((TextView)view).getText().toString();
+				AlertDialog.Builder builder = new AlertDialog.Builder(MainScreen.this);
+
+				final ArrayMap<String, String> actions = new ArrayMap<String, String>();//todo: write my class
+				actions.put("Private message", "/privmsg");
+				actions.put("WhoIs", "/whois");
+				actions.put("Kick", "/kick");
+				actions.put("Ping", "/ping");
+				actions.put("Give op", "/op");
+				actions.put("Give voice", "/voice");
+				actions.put("Take op", "/deop");
+				actions.put("Take voice","/devoice");
+
+				builder.setTitle("Action list");
+				Set<String> keys = actions.keySet();
+				builder.setItems(keys.toArray(new String[keys.size()]), new DialogInterface.OnClickListener()
+				{
+					@Override
+					public void onClick(DialogInterface dialog, int which)
+					{
+						if (which < actions.size())
+						{
+							actions.valueAt(which);
+							{
+								int curTabId = tabAdapter.getCurTab().getTabId();
+								getService().onTextEntered(curTabId, actions.valueAt(which) + ' ' + nick);
+							}
+						}
+					}
+				});
+				builder.show();
+			}
+		});
 
 		nickList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener()
 		{
@@ -196,9 +245,11 @@ public class MainScreen extends FragmentActivity
 			{
 				String nick = ((TextView)view).getText().toString();
 				EditText inputText = tabAdapter.getCurTab().getInputText();
+
 				int start = Math.max(inputText.getSelectionStart(), 0);
 				int end = Math.max(inputText.getSelectionEnd(), 0);
 				nick += (start == 0 && end == 0)? ", " : " ";
+
 				inputText.getText().replace(Math.min(start, end), Math.max(start, end), nick, 0, nick.length());
 				return true;
 			}
@@ -228,12 +279,12 @@ public class MainScreen extends FragmentActivity
 	@Override
 	public void onSaveInstanceState(Bundle savedInstanceState)
 	{
-		super.onSaveInstanceState(savedInstanceState);
 		ViewPager pager = (ViewPager)findViewById(R.id.view_pager);
 		if (pager != null)
 		{
 			savedInstanceState.putParcelable(((Integer)R.id.view_pager).toString(), pager.onSaveInstanceState());
 		}
+		super.onSaveInstanceState(savedInstanceState);
 
 	}
 

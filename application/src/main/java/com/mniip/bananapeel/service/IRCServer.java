@@ -34,8 +34,8 @@ import static com.mniip.bananapeel.util.TextEvent.Type.*;
 
 public class IRCServer
 {
-	private IRCService service;
-	private ServerTab serverTab;
+	public final IRCService service;
+	public final ServerTab tab;
 	private IRCConnection connection;
 	private IRCServerPreferences preferences;
 
@@ -69,24 +69,14 @@ public class IRCServer
 	public IRCServer(IRCService service, ServerTab serverTab, IRCServerPreferences preferences)
 	{
 		this.service = service;
-		this.serverTab = serverTab;
+		this.tab = serverTab;
 		this.preferences = preferences;
-	}
-
-	public IRCService getService()
-	{
-		return service;
-	}
-
-	public ServerTab getTab()
-	{
-		return serverTab;
 	}
 
 	public void setPreferences(IRCServerPreferences preferences)
 	{
 		this.preferences = preferences;
-		serverTab.setTitle(preferences.getName());
+		tab.setTitle(preferences.getName());
 	}
 
 	private static class Reconnect implements Runnable
@@ -144,7 +134,7 @@ public class IRCServer
 			}
 			catch(GeneralSecurityException e)
 			{
-				serverTab.putLine(new TextEvent(ERROR, e.toString()));
+				tab.putLine(new TextEvent(ERROR, e.toString()));
 				Log.d("BananaPeel", "", e);
 				return;
 			}
@@ -161,7 +151,7 @@ public class IRCServer
 			connection.disconnect();
 		connection = null;
 		for(Tab tab : service.tabs)
-			if(tab.serverTab == getTab())
+			if(tab.serverTab == tab)
 				tab.putLine(new TextEvent(ERROR, "Disconnected (" + reason + ")"));
 	}
 
@@ -318,10 +308,10 @@ public class IRCServer
 						args += " ";
 					args += msg.args[i];
 				}
-				srv.getTab().putLine(new TextEvent(NUMERIC, msg.command, args));
+				srv.tab.putLine(new TextEvent(NUMERIC, msg.command, args));
 			}
 			else
-				srv.getTab().putLine(new TextEvent(RAW, msg.toIRC()));
+				srv.tab.putLine(new TextEvent(RAW, msg.toIRC()));
 			return true;
 		}
 	};
@@ -370,7 +360,7 @@ public class IRCServer
 				String names = msg.args[3];
 				if(srv.waitingNames.contains(channel))
 				{
-					Tab tab = srv.getService().findTab(srv.getTab(), channel);
+					Tab tab = srv.service.findTab(srv.tab, channel);
 					if(tab != null)
 					{
 						for(String nick : names.split(" "))
@@ -385,7 +375,7 @@ public class IRCServer
 							entry.nick = nick;
 							tab.nickList.add(entry);
 						}
-						srv.getService().changeNickList(tab);
+						srv.service.changeNickList(tab);
 						return true;
 					}
 				}
@@ -537,12 +527,12 @@ public class IRCServer
 			{
 				String nick = msg.getNick();
 				String channel = msg.args[0];
-				Tab tab = srv.getService().findTab(srv.getTab(), channel);
+				Tab tab = srv.service.findTab(srv.tab, channel);
 				if(srv.config.nickCollator.equals(nick, srv.ourNick))
 				{
 					if(tab == null)
 					{
-						tab = srv.getService().createTab(srv.getTab(), Tab.Type.CHANNEL, channel);
+						tab = srv.service.createTab(srv.tab, Tab.Type.CHANNEL, channel);
 						tab.nickList = new BiSet<>(NickListEntry.nickComparator(srv.config.nickCollator), srv.nickListEntryComparator);
 					}
 					else
@@ -556,7 +546,7 @@ public class IRCServer
 				else if(tab != null)
 				{
 					tab.nickList.add(new NickListEntry(nick));
-					srv.getService().changeNickList(tab);
+					srv.service.changeNickList(tab);
 				}
 				if(tab != null)
 					tab.putLine(new TextEvent(JOIN, nick, msg.getUserHost(), channel));
@@ -572,12 +562,12 @@ public class IRCServer
 				String channel = msg.args[0];
 				String target = msg.args[1];
 				String reason = msg.args.length >= 3 ? msg.args[2] : "";
-				Tab tab = srv.getService().findTab(srv.serverTab, channel);
+				Tab tab = srv.service.findTab(srv.tab, channel);
 				if(srv.config.nickCollator.equals(target, srv.ourNick))
 				{
 					if(tab != null)
-						srv.getService().deleteTab(tab.id);
-					srv.getTab().putLine(new TextEvent(KICK, kicker, target, channel, reason));
+						srv.service.deleteTab(tab.id);
+					srv.tab.putLine(new TextEvent(KICK, kicker, target, channel, reason));
 					return true;
 				}
 				else if(tab != null)
@@ -586,7 +576,7 @@ public class IRCServer
 					if(entry != null)
 					{
 						tab.nickList.remove(entry);
-						srv.getService().changeNickList(tab);
+						srv.service.changeNickList(tab);
 						tab.putLine(new TextEvent(KICK, kicker, target, channel, reason));
 					}
 				}
@@ -601,7 +591,7 @@ public class IRCServer
 				String from = msg.getNick();
 				String channel = msg.args[0];
 				String mode = msg.args[1];
-				Tab tab = srv.getService().findTab(srv.getTab(), channel);
+				Tab tab = srv.service.findTab(srv.tab, channel);
 				if(tab != null)
 				{
 					boolean changed = false;
@@ -626,7 +616,7 @@ public class IRCServer
 						modes += " " + msg.args[i];
 					tab.putLine(new TextEvent(MODE_CHANGE, from, channel, modes));
 					if(changed)
-						srv.getService().changeNickList(tab);
+						srv.service.changeNickList(tab);
 				}
 				return tab != null;
 			}
@@ -642,12 +632,12 @@ public class IRCServer
 				if(srv.config.nickCollator.equals(from, srv.ourNick))
 				{
 					srv.ourNick = to;
-					srv.getTab().putLine(new TextEvent(NICK_CHANGE, from, to));
+					srv.tab.putLine(new TextEvent(NICK_CHANGE, from, to));
 					seen = true;
 				}
 				NickListEntry search = new NickListEntry(from);
-				for(Tab tab : srv.getService().tabs)
-					if(tab.serverTab == srv.serverTab && tab.nickList != null)
+				for(Tab tab : srv.service.tabs)
+					if(tab.serverTab == srv.tab && tab.nickList != null)
 					{
 						NickListEntry entry = tab.nickList.findPrimary(search);
 						if(entry != null)
@@ -656,7 +646,7 @@ public class IRCServer
 							entry.nick = to;
 							entry.updateStatus(srv);
 							tab.nickList.add(entry);
-							srv.getService().changeNickList(tab);
+							srv.service.changeNickList(tab);
 							tab.putLine(new TextEvent(NICK_CHANGE, from, to));
 							seen = true;
 						}
@@ -672,15 +662,15 @@ public class IRCServer
 				String nick = msg.getNick();
 				String channel = msg.args[0];
 				String reason = msg.args.length >= 2 ? msg.args[1] : null;
-				Tab tab = srv.getService().findTab(srv.serverTab, channel);
+				Tab tab = srv.service.findTab(srv.tab, channel);
 				if(srv.config.nickCollator.equals(nick, srv.ourNick))
 				{
 					if(tab != null)
-						srv.getService().deleteTab(tab.id);
+						srv.service.deleteTab(tab.id);
 					if(reason == null)
-						srv.getTab().putLine(new TextEvent(PART, nick, msg.getUserHost(), channel));
+						srv.tab.putLine(new TextEvent(PART, nick, msg.getUserHost(), channel));
 					else
-						srv.getTab().putLine(new TextEvent(PART_WITH_REASON, nick, msg.getUserHost(), channel, reason));
+						srv.tab.putLine(new TextEvent(PART_WITH_REASON, nick, msg.getUserHost(), channel, reason));
 					return true;
 				}
 				else if(tab != null)
@@ -689,7 +679,7 @@ public class IRCServer
 					if(entry != null)
 					{
 						tab.nickList.remove(entry);
-						srv.getService().changeNickList(tab);
+						srv.service.changeNickList(tab);
 						if(reason == null)
 							tab.putLine(new TextEvent(PART, nick, msg.getUserHost(), channel));
 						else
@@ -725,15 +715,15 @@ public class IRCServer
 		if(command.equalsIgnoreCase("ACTION"))
 			if(srv.config.nickCollator.equals(target, srv.ourNick))
 			{
-				Tab tab = srv.getService().findTab(srv.getTab(), nick);
+				Tab tab = srv.service.findTab(srv.tab, nick);
 				if(tab == null)
-					tab = srv.getService().createTab(srv.getTab(), Tab.Type.QUERY, nick);
+					tab = srv.service.createTab(srv.tab, Tab.Type.QUERY, nick);
 				tab.putLine(new TextEvent(CTCP_ACTION, nick, args));
 				return true;
 			}
 			else
 			{
-				Tab tab = srv.getService().findTab(srv.getTab(), target);
+				Tab tab = srv.service.findTab(srv.tab, target);
 				if(tab != null)
 					tab.putLine(new TextEvent(CTCP_ACTION, nick, args));
 				return tab != null;
@@ -784,15 +774,15 @@ public class IRCServer
 					return onCTCP(srv, nick, target, text.substring(1, text.length() - 1));
 				else if(srv.config.nickCollator.equals(target, srv.ourNick))
 				{
-					Tab tab = srv.getService().findTab(srv.getTab(), nick);
+					Tab tab = srv.service.findTab(srv.tab, nick);
 					if(tab == null)
-						tab = srv.getService().createTab(srv.getTab(), Tab.Type.QUERY, nick);
+						tab = srv.service.createTab(srv.tab, Tab.Type.QUERY, nick);
 					tab.putLine(new TextEvent(time, MESSAGE, nick, text));
 					return true;
 				}
 				else
 				{
-					Tab tab = srv.getService().findTab(srv.getTab(), target);
+					Tab tab = srv.service.findTab(srv.tab, target);
 					if(tab != null)
 						tab.putLine(new TextEvent(time, MESSAGE, nick, text));
 					return tab != null;
@@ -808,14 +798,14 @@ public class IRCServer
 				String reason = msg.args.length >= 1 ? msg.args[0] : null;
 				boolean seen = false;
 				NickListEntry search = new NickListEntry(nick);
-				for(Tab tab : srv.getService().tabs)
-					if(tab.serverTab == srv.serverTab && tab.nickList != null)
+				for(Tab tab : srv.service.tabs)
+					if(tab.serverTab == srv.tab && tab.nickList != null)
 					{
 						NickListEntry entry = tab.nickList.findPrimary(search);
 						if(entry != null)
 						{
 							tab.nickList.remove(entry);
-							srv.getService().changeNickList(tab);
+							srv.service.changeNickList(tab);
 							seen = true;
 							if(reason == null)
 								tab.putLine(new TextEvent(QUIT, nick, msg.getUserHost()));

@@ -14,7 +14,7 @@ import static com.mniip.bananapeel.util.TextEvent.Type.*;
 
 public class TextEvent
 {
-	public static enum Type
+	public enum Type
 	{
 		ERROR,
 		RAW,

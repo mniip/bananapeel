@@ -161,7 +161,7 @@ public class TabAdapter extends PagerAdapter
             for(int p = 0; p < tabIds.size(); p++)
             {
                 Tab t = service.tabs.get(tabIds.get(p));
-                if(tab.getServerTab() == t)
+                if(tab.serverTab == t)
                     pos = p + 1;
                 if(t != null && t.getTitle().compareToIgnoreCase(tab.getTitle()) < 0)
                     pos = p + 1;

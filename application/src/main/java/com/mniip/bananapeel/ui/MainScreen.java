@@ -153,7 +153,7 @@ public class MainScreen extends FragmentActivity
 
 		public void onTabNickListChanged(int tabId)
 		{
-			if(getService().getFrontTab().getId() == tabId)
+			if(getService().getFrontTab().id == tabId)
 			{
 				View nickList = (View)findViewById(R.id.nick_list);
 				DrawerLayout drawerLayout = (DrawerLayout)findViewById(R.id.drawerLayout);

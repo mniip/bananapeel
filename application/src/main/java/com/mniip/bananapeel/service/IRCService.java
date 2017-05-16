@@ -83,18 +83,18 @@ public class IRCService extends Service
 	public ServerTab createServerTab()
 	{
 		ServerTab t = new ServerTab(this, unusedTabId++);
-		tabs.put(t.getId(), t);
+		tabs.put(t.id, t);
 		if(listener != null)
-			listener.onTabAdded(t.getId());
+			listener.onTabAdded(t.id);
 		return t;
 	}
 
-	public Tab createTab(ServerTab parent, String title)
+	public Tab createTab(ServerTab parent, Tab.Type type, String title)
 	{
-		Tab t = new Tab(this, parent, unusedTabId++, title);
-		tabs.put(t.getId(), t);
+		Tab t = new Tab(this, parent, unusedTabId++, type, title);
+		tabs.put(t.id, t);
 		if(listener != null)
-			listener.onTabAdded(t.getId());
+			listener.onTabAdded(t.id);
 		return t;
 	}
 
@@ -111,7 +111,7 @@ public class IRCService extends Service
 	public Tab findTab(ServerTab sTab, String title)
 	{
 		for(Tab tab : tabs)
-			if(tab.getServerTab() == sTab && tab.getTitle().equalsIgnoreCase(title)) // TODO: casemapping here
+			if(tab.serverTab == sTab && tab.getTitle().equalsIgnoreCase(title)) // TODO: casemapping here
 				return tab;
 		return null;
 	}
@@ -131,7 +131,7 @@ public class IRCService extends Service
 	public void changeNickList(Tab tab)
 	{
 		if(listener != null)
-			listener.onTabNickListChanged(tab.getId());
+			listener.onTabNickListChanged(tab.id);
 	}
 
 
@@ -143,10 +143,10 @@ public class IRCService extends Service
 			if(str.length() > 0 && str.charAt(0) == '/')
 				onCommandEntered(t, str.substring(1));
 			else
-				if(t.getServerTab().server != null)
+				if(t.serverTab.server != null)
 				{
-					t.getServerTab().server.send(new IRCMessage("PRIVMSG", t.getTitle(), str));
-					t.putLine(new TextEvent(TextEvent.Type.OUR_MESSAGE, t.getServerTab().server.ourNick, str));
+					t.serverTab.server.send(new IRCMessage("PRIVMSG", t.getTitle(), str));
+					t.putLine(new TextEvent(TextEvent.Type.OUR_MESSAGE, t.serverTab.server.ourNick, str));
 				}
 		}
 	}
@@ -204,7 +204,7 @@ public class IRCService extends Service
 	{
 		public boolean invoke(Tab tab, CommandData data)
 		{
-			tab.getServerTab().server.send(IRCMessage.fromIRC(data.wordEols.get(0)));
+			tab.serverTab.server.send(IRCMessage.fromIRC(data.wordEols.get(0)));
 			return true;
 		}
 	};
@@ -220,10 +220,10 @@ public class IRCService extends Service
 				if(data.words.size() >= 1)
 				{
 					String server = data.words.get(1);
-					IRCServerPreferences preferences = tab.getService().preferences.getServer(server);
+					IRCServerPreferences preferences = tab.service.preferences.getServer(server);
 					if(preferences == null)
-						preferences = new IRCServerPreferences.Dummy(data.words.get(1), tab.getService().preferences, data.words.get(1), 6667);
-					IRCServer srv = tab.getServerTab().server;
+						preferences = new IRCServerPreferences.Dummy(data.words.get(1), tab.service.preferences, data.words.get(1), 6667);
+					IRCServer srv = tab.serverTab.server;
 					srv.setPreferences(preferences);
 					srv.connect();
 				}

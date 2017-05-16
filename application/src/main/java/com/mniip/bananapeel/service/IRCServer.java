@@ -155,6 +155,16 @@ public class IRCServer
 		connection.connect(preferences.getHost(), preferences.getPort());
 	}
 
+	public void disconnect(String reason)
+	{
+		if(connection != null)
+			connection.disconnect();
+		connection = null;
+		for(Tab tab : service.tabs)
+			if(tab.serverTab == getTab())
+				tab.putLine(new TextEvent(ERROR, "Disconnected (" + reason + ")"));
+	}
+
 	public void send(IRCMessage msg)
 	{
 		if(connection != null)
@@ -183,13 +193,14 @@ public class IRCServer
 
 	public void onError(Exception e)
 	{
-		for(Tab tab : service.tabs)
-			if(tab.serverTab == getTab())
-				tab.putLine(new TextEvent(ERROR, e.toString()));
+		boolean hadConnection = connection != null;
+		disconnect(e.toString());
 		Log.d("BananaPeel", "", e);
-		connection = null;
-		reconnect = new Reconnect(this);
-		new Handler(Looper.getMainLooper()).postDelayed(reconnect, 5000);
+		if(hadConnection)
+		{
+			reconnect = new Reconnect(this);
+			new Handler(Looper.getMainLooper()).postDelayed(reconnect, 5000);
+		}
 	}
 
 	public void onRegistered()
@@ -510,6 +521,16 @@ public class IRCServer
 			}
 		}).needArgs(2));
 
+
+		commandBins.add("ERROR", new Command()
+		{
+			public boolean invoke(IRCServer srv, IRCMessage msg)
+			{
+				srv.disconnect(msg.args.length > 0 ? msg.args[0] : "");
+				return true;
+			}
+		});
+
 		commandBins.add("JOIN", new Require(new Command()
 		{
 			public boolean invoke(IRCServer srv, IRCMessage msg)
@@ -542,6 +563,36 @@ public class IRCServer
 				return tab != null;
 			}
 		}).needSource(true).needArgs(1));
+
+		commandBins.add("KICK", new Require(new Command()
+		{
+			public boolean invoke(IRCServer srv, IRCMessage msg)
+			{
+				String kicker = msg.getNick();
+				String channel = msg.args[0];
+				String target = msg.args[1];
+				String reason = msg.args.length >= 3 ? msg.args[2] : "";
+				Tab tab = srv.getService().findTab(srv.serverTab, channel);
+				if(srv.config.nickCollator.equals(target, srv.ourNick))
+				{
+					if(tab != null)
+						srv.getService().deleteTab(tab.id);
+					srv.getTab().putLine(new TextEvent(KICK, kicker, target, channel, reason));
+					return true;
+				}
+				else if(tab != null)
+				{
+					NickListEntry entry = tab.nickList.findPrimary(new NickListEntry(target));
+					if(entry != null)
+					{
+						tab.nickList.remove(entry);
+						srv.getService().changeNickList(tab);
+						tab.putLine(new TextEvent(KICK, kicker, target, channel, reason));
+					}
+				}
+				return tab != null;
+			}
+		}).needSource(true).needArgs(2));
 
 		commandBins.add("MODE", new Require(new Command()
 		{

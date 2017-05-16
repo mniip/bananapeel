@@ -21,9 +21,12 @@ public class TextEvent
 		NUMERIC,
 		MESSAGE,
 		OUR_MESSAGE,
+		OUR_MSG,
+		OUR_NOTICE,
 		JOIN,
 		PART,
 		PART_WITH_REASON,
+		KICK,
 		QUIT,
 		QUIT_WITH_REASON,
 		NICK_CHANGE,
@@ -31,7 +34,8 @@ public class TextEvent
 		CTCP_ACTION,
 		OUR_CTCP_ACTION,
 		CTCP_PRIVATE,
-		CTCP_CHANNEL
+		CTCP_CHANNEL,
+		OUR_CTCP,
 	}
 
 	private final Date timestamp;
@@ -105,9 +109,12 @@ public class TextEvent
 		templates.put(NUMERIC, IRCFormatting.parse("\00313* ($0)\017 $1"));
 		templates.put(MESSAGE, IRCFormatting.parse("\00311<$2$0>\017 $1"));
 		templates.put(OUR_MESSAGE, IRCFormatting.parse("\00313<$2$0>\017 $1"));
+		templates.put(OUR_MSG, IRCFormatting.parse("\00311>$0<\017 $1"));
+		templates.put(OUR_NOTICE, IRCFormatting.parse("\00311->$0<-\017 $1"));
 		templates.put(JOIN, IRCFormatting.parse("\00308* $0 ($1) has joined \00312$2"));
 		templates.put(PART, IRCFormatting.parse("\00311* $0 ($1) has left \00312$2"));
 		templates.put(PART_WITH_REASON, IRCFormatting.parse("\00311* $0 ($1) has left \00312$2\00311 ($3)"));
+		templates.put(KICK, IRCFormatting.parse("\00311* $0 has kicked $1 from \00312$2\00311 ($3)"));
 		templates.put(QUIT, IRCFormatting.parse("\00312* $0 ($1) has quit"));
 		templates.put(QUIT_WITH_REASON, IRCFormatting.parse("\00312* $0 ($1) has quit ($2)"));
 		templates.put(NICK_CHANGE, IRCFormatting.parse("* \00311$0\017 has changed nick to \00311$1\017"));
@@ -116,6 +123,7 @@ public class TextEvent
 		templates.put(OUR_CTCP_ACTION, IRCFormatting.parse("* \00313$2$0\017 $1"));
 		templates.put(CTCP_PRIVATE, IRCFormatting.parse("* $0 requested CTCP $1 $2"));
 		templates.put(CTCP_CHANNEL, IRCFormatting.parse("* $0 requested CTCP $1 $2"));
+		templates.put(OUR_CTCP, IRCFormatting.parse("* Requested CTCP $2 from $1"));
 	}
 
 	private static final DateFormat timestampFormatter = new SimpleDateFormat("[HH:mm:ss] ");

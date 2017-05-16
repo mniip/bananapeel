@@ -22,6 +22,8 @@ public class TextEvent
 		MESSAGE,
 		OUR_MESSAGE,
 		OUR_MSG,
+		NOTICE,
+		CHANNEL_NOTICE,
 		OUR_NOTICE,
 		JOIN,
 		PART,
@@ -36,6 +38,7 @@ public class TextEvent
 		CTCP_PRIVATE,
 		CTCP_CHANNEL,
 		OUR_CTCP,
+		CTCP_REPLY,
 	}
 
 	private final Date timestamp;
@@ -106,24 +109,27 @@ public class TextEvent
 	{
 		templates.put(ERROR, IRCFormatting.parse("$0"));
 		templates.put(RAW, IRCFormatting.parse("$0"));
-		templates.put(NUMERIC, IRCFormatting.parse("\00313* ($0)\017 $1"));
-		templates.put(MESSAGE, IRCFormatting.parse("\00311<$2$0>\017 $1"));
-		templates.put(OUR_MESSAGE, IRCFormatting.parse("\00313<$2$0>\017 $1"));
-		templates.put(OUR_MSG, IRCFormatting.parse("\00311>$0<\017 $1"));
-		templates.put(OUR_NOTICE, IRCFormatting.parse("\00311->$0<-\017 $1"));
-		templates.put(JOIN, IRCFormatting.parse("\00308* $0 ($1) has joined \00312$2"));
-		templates.put(PART, IRCFormatting.parse("\00311* $0 ($1) has left \00312$2"));
-		templates.put(PART_WITH_REASON, IRCFormatting.parse("\00311* $0 ($1) has left \00312$2\00311 ($3)"));
-		templates.put(KICK, IRCFormatting.parse("\00311* $0 has kicked $1 from \00312$2\00311 ($3)"));
-		templates.put(QUIT, IRCFormatting.parse("\00312* $0 ($1) has quit"));
-		templates.put(QUIT_WITH_REASON, IRCFormatting.parse("\00312* $0 ($1) has quit ($2)"));
-		templates.put(NICK_CHANGE, IRCFormatting.parse("* \00311$0\017 has changed nick to \00311$1\017"));
-		templates.put(MODE_CHANGE, IRCFormatting.parse("* \00311$0\017 has set mode \00312$1\017 $2"));
-		templates.put(CTCP_ACTION, IRCFormatting.parse("* \00311$2$0\017 $1"));
-		templates.put(OUR_CTCP_ACTION, IRCFormatting.parse("* \00313$2$0\017 $1"));
+		templates.put(NUMERIC, IRCFormatting.parse("\00304* ($0)\017 $1"));
+		templates.put(MESSAGE, IRCFormatting.parse("\00310<$2$0>\017 $1"));
+		templates.put(OUR_MESSAGE, IRCFormatting.parse("\00304<$2$0>\017 $1"));
+		templates.put(OUR_MSG, IRCFormatting.parse("\00304>$0<\017 $1"));
+		templates.put(NOTICE, IRCFormatting.parse("-\00310$0\017- $1"));
+		templates.put(CHANNEL_NOTICE, IRCFormatting.parse("-\00310$0/\00306$1\017- $2"));
+		templates.put(OUR_NOTICE, IRCFormatting.parse("-\00304>$0<\017- $1"));
+		templates.put(JOIN, IRCFormatting.parse("\00303* \00310$0\00303 ($1) has joined \00306$2"));
+		templates.put(PART, IRCFormatting.parse("\00305* \00310$0\00305 ($1) has left \00306$2"));
+		templates.put(PART_WITH_REASON, IRCFormatting.parse("\00305* \00310$0\00305 ($1) has left \00306$2\00305 ($3)"));
+		templates.put(KICK, IRCFormatting.parse("\00307* \00310$0\00307 has kicked \00304$1\00307 from \00306$2\00307 ($3)"));
+		templates.put(QUIT, IRCFormatting.parse("\00304* \00310$0\00304 ($1) has quit"));
+		templates.put(QUIT_WITH_REASON, IRCFormatting.parse("\00304* \00310$0\00304 ($1) has quit ($2)"));
+		templates.put(NICK_CHANGE, IRCFormatting.parse("\00302* \00310$0\00302 has changed nick to \00310$1"));
+		templates.put(MODE_CHANGE, IRCFormatting.parse("\00307* \00310$0\00307 has set mode \00306$1\017 $2"));
+		templates.put(CTCP_ACTION, IRCFormatting.parse("* \00310$2$0\017 $1"));
+		templates.put(OUR_CTCP_ACTION, IRCFormatting.parse("* \00304$2$0\017 $1"));
 		templates.put(CTCP_PRIVATE, IRCFormatting.parse("* $0 requested CTCP $1 $2"));
 		templates.put(CTCP_CHANNEL, IRCFormatting.parse("* $0 requested CTCP $1 $2"));
 		templates.put(OUR_CTCP, IRCFormatting.parse("* Requested CTCP $2 from $1"));
+		templates.put(CTCP_REPLY, IRCFormatting.parse("* CTCP reply $2 from $1"));
 	}
 
 	private static final DateFormat timestampFormatter = new SimpleDateFormat("[HH:mm:ss] ");

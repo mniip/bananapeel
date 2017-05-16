@@ -655,6 +655,33 @@ public class IRCServer
 			}
 		}).needSource(true).needArgs(1));
 
+		commandBins.add("NOTICE", new Require(new Command()
+		{
+			public boolean invoke(IRCServer srv, IRCMessage msg)
+			{
+				String nick = msg.getNick();
+				String target = msg.args[0];
+				String text = msg.args[1];
+
+				Date time = getTimestamp(srv, msg);
+				if(srv.config.nickCollator.equals(target, srv.ourNick))
+				{
+					if(text.length() >= 2 && text.charAt(0) == '\001' && text.charAt(text.length() - 1) == '\001')
+						srv.service.getFrontTab().putLine(new TextEvent(time, CTCP_REPLY, nick, text.substring(1, text.length() - 1)));
+					else
+						srv.service.getFrontTab().putLine(new TextEvent(time, NOTICE, nick, text));
+					return true;
+				}
+				else
+				{
+					Tab tab = srv.service.findTab(srv.tab, target);
+					if(tab != null)
+						tab.putLine(new TextEvent(time, CHANNEL_NOTICE, nick, target, text));
+					return tab != null;
+				}
+			}
+		}).needSource(true).needArgs(2));
+
 		commandBins.add("PART", new Require(new Command()
 		{
 			public boolean invoke(IRCServer srv, IRCMessage msg)
@@ -744,6 +771,25 @@ public class IRCServer
 		return true;
 	}
 
+	private static Date getTimestamp(IRCServer srv, IRCMessage msg)
+	{
+		if(srv.config.capsEnabled.contains("znc.in/server-time-iso") || srv.config.capsEnabled.contains("server-time"))
+			if(msg.tags != null && msg.tags.get("time") != null)
+				try
+				{
+					return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(msg.tags.get("time"));
+				}
+				catch(ParseException e) {}
+		if(srv.config.capsEnabled.contains("znc.in/server-time"))
+			if(msg.tags != null && msg.tags.get("t") != null)
+				try
+				{
+					return new Date(Long.valueOf(msg.tags.get("t")) * 1000);
+				}
+				catch(NumberFormatException e) {}
+		return null;
+	}
+
 	static
 	{
 		commandBins.add("PRIVMSG", new Require(new Command()
@@ -754,22 +800,7 @@ public class IRCServer
 				String target = msg.args[0];
 				String text = msg.args[1];
 
-				Date time = null;
-				if(srv.config.capsEnabled.contains("znc.in/server-time-iso") || srv.config.capsEnabled.contains("server-time"))
-					if(msg.tags != null && msg.tags.get("time") != null)
-						try
-						{
-							time = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(msg.tags.get("time"));
-						}
-						catch(ParseException e) {}
-				if(srv.config.capsEnabled.contains("znc.in/server-time"))
-					if(msg.tags != null && msg.tags.get("t") != null)
-						try
-						{
-							time = new Date(Long.valueOf(msg.tags.get("t")) * 1000);
-						}
-						catch(NumberFormatException e) {}
-
+				Date time = getTimestamp(srv, msg);
 				if(text.length() >= 2 && text.charAt(0) == '\001' && text.charAt(text.length() - 1) == '\001')
 					return onCTCP(srv, nick, target, text.substring(1, text.length() - 1));
 				else if(srv.config.nickCollator.equals(target, srv.ourNick))

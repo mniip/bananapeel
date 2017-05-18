@@ -17,15 +17,14 @@
         android:id="@+id/bottom_bar">
 
         <ImageButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="48dp"
+            android:layout_height="match_parent"
             android:id="@+id/search_button"
             android:layout_alignParentLeft="true"
             android:layout_alignBottom="@+id/input_box"
             android:layout_alignTop="@+id/input_box"
             android:src="@android:drawable/ic_menu_search"
-            style="?android:attr/borderlessButtonStyle"
-            android:minWidth="0dp" />
+            android:scaleType="fitXY" />
 
         <EditText
             android:layout_width="match_parent"
@@ -38,14 +37,14 @@
             android:layout_toRightOf="@+id/search_button" />
 
         <ImageButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="48dp"
+            android:layout_height="match_parent"
             android:id="@+id/send_button"
             android:layout_alignParentRight="true"
             android:layout_alignTop="@+id/input_box"
             android:layout_alignBottom="@+id/input_box"
             android:src="@drawable/ic_send"
-            style="?android:attr/borderlessButtonStyle"
-            android:minWidth="0dp" />
+            android:minWidth="0dp"
+            android:scaleType="fitXY" />
     </RelativeLayout>
 </RelativeLayout>

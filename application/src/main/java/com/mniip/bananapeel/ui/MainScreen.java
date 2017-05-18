@@ -176,7 +176,16 @@ public class MainScreen extends FragmentActivity
 
 		((ServiceApplication)getApplication()).ensureServiceStarted();
 		Intent i = new Intent(this, IRCService.class);
-		bindService(i, conn, BIND_IMPORTANT);
+
+		int bindType = BIND_AUTO_CREATE;
+		if(android.os.Build.VERSION.SDK_INT >= 14)
+			try
+			{
+				bindType |= MainScreen.class.getField("BIND_IMPORTANT").getInt(null);
+			}
+			catch(NoSuchFieldException e) {}
+			catch(IllegalAccessException e) {}
+		bindService(i, conn, bindType);
 
 		setContentView(R.layout.main_screen);
 

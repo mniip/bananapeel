@@ -51,6 +51,12 @@ public class IntMap<E> extends SparseArray<E> implements Iterable<E>
 			{
 				return new KV<>(parent, index++);
 			}
+
+			@Override
+			public void remove()
+			{
+				throw new UnsupportedOperationException();
+			}
 		}
 	}
 
@@ -74,6 +80,12 @@ public class IntMap<E> extends SparseArray<E> implements Iterable<E>
 		public E next()
 		{
 			return parent.valueAt(index++);
+		}
+
+		@Override
+		public void remove()
+		{
+			throw new UnsupportedOperationException();
 		}
 	}
 

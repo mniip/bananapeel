@@ -71,7 +71,7 @@ public class TabFragment extends Fragment
         View view = inflater.inflate(R.layout.tab_fragment, parent, false);
 
         recycler = (RecyclerView)view.findViewById(R.id.recycler);
-        LinearLayoutManager manager = new LinearLayoutManager(getContext());
+        LinearLayoutManager manager = new LinearLayoutManager(recycler.getContext());
         manager.setStackFromEnd(true);
         recycler.setLayoutManager(manager);
         adapter = new TextLineAdapter(tabId);

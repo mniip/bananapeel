@@ -183,7 +183,7 @@ public class IRCServer
 
 	public void onError(Exception e)
 	{
-		for(Tab tab : service.tabs)
+		for(Tab tab : service.getTabs())
 			if(tab.getServerTab() == getTab())
 				tab.putLine(new TextEvent(ERROR, e.toString()));
 		Log.d("BananaPeel", "", e);
@@ -254,7 +254,7 @@ public class IRCServer
 	private void updateComparator()
 	{
 		nickListEntryComparator = new ComposedComparator<>(NickListEntry.statusComparator(config.statusChars), NickListEntry.nickComparator(config.nickCollator));
-		for(Tab tab : service.tabs)
+		for(Tab tab : service.getTabs())
 			if(tab.getServerTab().server == this && tab.nickList != null)
 			{
 				tab.nickList.setSecondaryComparator(nickListEntryComparator);
@@ -595,7 +595,7 @@ public class IRCServer
 					seen = true;
 				}
 				NickListEntry search = new NickListEntry(from);
-				for(Tab tab : srv.getService().tabs)
+				for(Tab tab : srv.getService().getTabs())
 					if(tab.getServerTab() == srv.serverTab && tab.nickList != null)
 					{
 						NickListEntry entry = tab.nickList.findPrimary(search);
@@ -757,7 +757,7 @@ public class IRCServer
 				String reason = msg.args.length >= 1 ? msg.args[0] : null;
 				boolean seen = false;
 				NickListEntry search = new NickListEntry(nick);
-				for(Tab tab : srv.getService().tabs)
+				for(Tab tab : srv.getService().getTabs())
 					if(tab.getServerTab() == srv.serverTab && tab.nickList != null)
 					{
 						NickListEntry entry = tab.nickList.findPrimary(search);

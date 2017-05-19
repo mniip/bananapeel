@@ -24,8 +24,6 @@ public class TabAdapter extends PagerAdapter
     private MainScreen mainScreen;
 
     private TabFragment curTab;
-    private IntMap<Integer> tabPositions = new IntMap<>();
-    private ArrayList<Integer> tabIds = new ArrayList<>();
     private IntMap<TabFragment> tabFragments = new IntMap<>();
     private ArrayList<Fragment.SavedState> savedStates = new ArrayList<>();
 
@@ -57,7 +55,7 @@ public class TabAdapter extends PagerAdapter
     {
         if(service == null)
             return new View(mainScreen);
-        int tabId = tabIds.get(position);
+        int tabId = service.getTabByPosition(position).getId();
         TabFragment fragment = tabFragments.get(tabId);
         if(fragment == null)
         {
@@ -93,7 +91,7 @@ public class TabAdapter extends PagerAdapter
     {
         if(object instanceof Fragment)
         {
-            Integer pos = tabPositions.get(((TabFragment)object).getTabId());
+            Integer pos = service.getPosById(((TabFragment)object).getTabId());
             return pos == null ? POSITION_NONE : pos;
         }
         return service == null ? POSITION_UNCHANGED : POSITION_NONE;
@@ -114,7 +112,7 @@ public class TabAdapter extends PagerAdapter
     {
         if(service != null)
         {
-            int id = tabIds.get(position);
+            int id = service.getTabByPosition(position).getId();
             service.setFrontTab(id);
 
             View nickList = (View)mainScreen.findViewById(R.id.nick_list);
@@ -131,11 +129,9 @@ public class TabAdapter extends PagerAdapter
     public void setService(IRCService service)
     {
         this.service = service;
-        tabPositions.clear();
-        tabIds.clear();
 
-        for(IntMap.KV<Tab> kv : service.tabs.pairs())
-            onTabAdded(kv.getKey());
+        for(Tab tab : service.getTabs())
+            onTabAdded(tab.getId());
     }
 
     public void onTabLinesAdded(int tabId)
@@ -154,42 +150,18 @@ public class TabAdapter extends PagerAdapter
 
     public void onTabAdded(int tabId)
     {
-        Tab tab = service.tabs.get(tabId);
-        if(tab != null)
-        {
-            int pos = 0;
-            for(int p = 0; p < tabIds.size(); p++)
-            {
-                Tab t = service.tabs.get(tabIds.get(p));
-                if(tab.getServerTab() == t)
-                    pos = p + 1;
-                if(t != null && t.getTitle().compareToIgnoreCase(tab.getTitle()) < 0)
-                    pos = p + 1;
-            }
-            tabIds.add(pos, tabId);
-            savedStates.add(pos, null);
-            for(IntMap.KV<Integer> kv : tabPositions.pairs())
-                if(kv.getValue() >= pos)
-                    kv.setValue(kv.getValue() + 1);
-            tabPositions.put(tabId, pos);
-            notifyDataSetChanged();
-        }
+        Tab tab = service.getTabById(tabId);
+        savedStates.add(service.getPosById(tabId), null);
+        notifyDataSetChanged();
     }
 
     public void onTabRemoved(int tabId)
     {
-        Integer tabPos = tabPositions.get(tabId);
-        if(tabPos != null)
+        TabFragment fragment = tabFragments.get(tabId);
+        if(fragment != null)
         {
-            TabFragment fragment = tabFragments.get(tabId);
-            if(fragment != null)
-                fragment.setInactive();
-            tabIds.remove((int)tabPos);
-            savedStates.remove((int)tabPos);
-            tabPositions.delete(tabId);
-            for(IntMap.KV<Integer> kv : tabPositions.pairs())
-                if(kv.getValue() > tabPos)
-                    kv.setValue(kv.getValue() - 1);
+            fragment.setInactive();
+            savedStates.remove((int)service.getPosById(tabId));
             notifyDataSetChanged();
         }
     }
@@ -204,9 +176,9 @@ public class TabAdapter extends PagerAdapter
     {
         if(service == null)
             return mainScreen.getText(R.string.app_name).toString();
-        Integer tabId = tabIds.get(position);
-        if(tabId != null)
-            return service.tabs.get(tabId).getTitle();
+        Tab tab = service.getTabByPosition(position);
+        if(tab != null)
+            return tab.getTitle();
         else
             return "";
     }
@@ -217,7 +189,7 @@ public class TabAdapter extends PagerAdapter
         if(service == null)
             return 1;
         else
-            return tabIds.size();
+            return service.getTabsCount();
     }
 
     @Override

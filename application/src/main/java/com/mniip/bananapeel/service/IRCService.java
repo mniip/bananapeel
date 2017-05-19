@@ -28,6 +28,44 @@ public class IRCService extends Service
 	public IRCPreferences preferences;
 	private Tab frontTab;
 
+	private IntMap<Integer> tabPositions = new IntMap<>(); // tabId -> tabPosition
+	private ArrayList<Integer> tabIds = new ArrayList<>(); // position -> tabId
+	private IntMap<Tab> tabs = new IntMap<>(); // tabId -> tab
+
+	private int unusedTabId = 0;
+
+	public Tab getTabById(int id)
+	{
+		return tabs.get(id);
+	}
+
+	public Tab getTabByPosition(int position)
+	{
+		try
+		{
+			return getTabById(tabIds.get(position));
+		}
+		catch(IndexOutOfBoundsException e)
+		{
+			return null;
+		}
+	}
+
+	public int getPosById(int id)
+	{
+		return tabPositions.get(id);
+	}
+
+	public Iterable<Tab> getTabs()
+	{
+		return tabs;
+	}
+
+	public int getTabsCount()
+	{
+		return tabs.size();
+	}
+
 	public void setListener(IRCInterfaceListener l)
 	{
 		listener = l;
@@ -77,31 +115,64 @@ public class IRCService extends Service
 	@Override
 	public IBinder onBind(Intent i) { return new Binder(); }
 
-	public IntMap<Tab> tabs = new IntMap<>();
-	private int unusedTabId = 0;
+	private void updatePositions(Tab tab)
+	{
+		int tabId = tab.getId();
+
+		tabs.put(tabId, tab);
+
+		int pos = 0;
+		for(int p = 0; p < tabIds.size(); p++)
+		{
+			Tab t = tabs.get(tabIds.get(p));
+			if(tab.getServerTab() == t)
+				pos = p + 1;
+			if(t != null && t.getTitle().compareToIgnoreCase(tab.getTitle()) < 0)
+				pos = p + 1;
+		}
+		tabIds.add(pos, tabId);
+		for(IntMap.KV<Integer> kv : tabPositions.pairs())
+			if(kv.getValue() >= pos)
+				kv.setValue(kv.getValue() + 1);
+		tabPositions.put(tabId, pos);
+	}
 
 	public ServerTab createServerTab()
 	{
-		ServerTab t = new ServerTab(this, unusedTabId++);
-		tabs.put(t.getId(), t);
+		ServerTab tab = new ServerTab(this, unusedTabId++);
+
+		updatePositions(tab);
+
 		if(listener != null)
-			listener.onTabAdded(t.getId());
-		return t;
+			listener.onTabAdded(tab.getId());
+		return tab;
 	}
 
 	public Tab createTab(ServerTab parent, String title)
 	{
-		Tab t = new Tab(this, parent, unusedTabId++, title);
-		tabs.put(t.getId(), t);
+		Tab tab = new Tab(this, parent, unusedTabId++, title);
+
+		updatePositions(tab);
+
 		if(listener != null)
-			listener.onTabAdded(t.getId());
-		return t;
+			listener.onTabAdded(tab.getId());
+		return tab;
 	}
 
 	public void deleteTab(int tabId)
 	{
 		if(tabs.get(tabId) != null)
 		{
+			Integer tabPos = tabPositions.get(tabId);
+
+			if(tabPos != null)
+			{
+				tabIds.remove((int)tabPos);
+				tabPositions.delete(tabId);
+				for(IntMap.KV<Integer> kv : tabPositions.pairs())
+					if(kv.getValue() > tabPos)
+						kv.setValue(kv.getValue() - 1);
+			}
 			if(listener != null)
 				listener.onTabRemoved(tabId);
 			tabs.delete(tabId);

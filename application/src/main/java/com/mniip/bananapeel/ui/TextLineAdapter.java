@@ -22,7 +22,7 @@ public class TextLineAdapter extends RecyclerView.Adapter<TextLineAdapter.ViewHo
     {
         super();
         this.tabId = tabId;
-        textLines = ServiceApplication.getService().tabs.get(tabId).getTextLines();
+        textLines = ServiceApplication.getService().getTabById(tabId).getTextLines();
     }
 
     @Override

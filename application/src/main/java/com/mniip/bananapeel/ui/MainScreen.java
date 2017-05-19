@@ -285,7 +285,6 @@ public class MainScreen extends FragmentActivity
 		{
 			savedInstanceState.putParcelable(((Integer)R.id.view_pager).toString(), pager.onSaveInstanceState());
 		}
-
 	}
 
 

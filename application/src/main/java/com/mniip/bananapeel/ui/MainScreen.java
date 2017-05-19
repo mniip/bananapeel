@@ -279,12 +279,12 @@ public class MainScreen extends FragmentActivity
 	@Override
 	public void onSaveInstanceState(Bundle savedInstanceState)
 	{
+		super.onSaveInstanceState(savedInstanceState);
 		ViewPager pager = (ViewPager)findViewById(R.id.view_pager);
 		if (pager != null)
 		{
 			savedInstanceState.putParcelable(((Integer)R.id.view_pager).toString(), pager.onSaveInstanceState());
 		}
-		super.onSaveInstanceState(savedInstanceState);
 
 	}
 

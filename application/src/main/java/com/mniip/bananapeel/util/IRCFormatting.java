@@ -218,6 +218,8 @@ public class IRCFormatting
 			builder.setSpan(new Italics(), italicsBegin, builder.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 		if(underlineBegin != null)
 			builder.setSpan(new Underline(), underlineBegin, builder.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+		for(LinkFinder.Link link : LinkFinder.links(builder))
+			builder.setSpan(link, link.begin, link.end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 		return builder;
 	}
 }

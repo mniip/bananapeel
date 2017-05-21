@@ -220,7 +220,7 @@ public class MainScreen extends FragmentActivity
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id)
 			{
-				final String nick = ((TextView)view).getText().toString();
+				final String nick = getService().getFrontTab().nickList.getSecondary(position).nick;
 				AlertDialog.Builder builder = new AlertDialog.Builder(MainScreen.this);
 
 				final ArrayList<Pair> actions = new ArrayList<Pair>();

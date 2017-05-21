@@ -10,24 +10,37 @@ import java.util.List;
 
 public class Tab
 {
-	protected ServerTab serverTab;
-	private IRCService service;
-	private int id;
+	public enum Type
+	{
+		SERVER,
+		CHANNEL,
+		QUERY
+	}
+
+	public final ServerTab serverTab;
+	public final IRCService service;
+	public final int id;
+	public final Type type;
 	private String title;
 	public BiSet<NickListEntry> nickList;
 	private List<TextEvent> textLines = new ArrayList<>();
 
-	public Tab(IRCService service, ServerTab serverTab, int id, String title)
+	public Tab(IRCService service, ServerTab serverTab, int id, Type type, String title)
 	{
 		this.service = service;
 		this.serverTab = serverTab;
 		this.id = id;
+		this.type = type;
 		this.title = title;
 	}
 
-	public int getId()
+	protected Tab(IRCService service, int id, String title)
 	{
-		return id;
+		this.service = service;
+		this.serverTab = (ServerTab)this;
+		this.id = id;
+		this.type = Type.SERVER;
+		this.title = title;
 	}
 
 	public String getTitle()
@@ -41,16 +54,6 @@ public class Tab
 		IRCInterfaceListener listener = service.getListener();
 		if(listener != null)
 			listener.onTabTitleChanged(id);
-	}
-
-	public IRCService getService()
-	{
-		return service;
-	}
-
-	public ServerTab getServerTab()
-	{
-		return serverTab;
 	}
 
 	public List<TextEvent> getTextLines()

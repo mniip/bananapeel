@@ -55,7 +55,7 @@ public class TabAdapter extends PagerAdapter
     {
         if(service == null)
             return new View(mainScreen);
-        int tabId = service.getTabByPosition(position).getId();
+        int tabId = service.getTabByPosition(position).id;
         TabFragment fragment = tabFragments.get(tabId);
         if(fragment == null)
         {
@@ -112,7 +112,7 @@ public class TabAdapter extends PagerAdapter
     {
         if(service != null)
         {
-            int id = service.getTabByPosition(position).getId();
+            int id = service.getTabByPosition(position).id;
             service.setFrontTab(id);
 
             View nickList = (View)mainScreen.findViewById(R.id.nick_list);
@@ -131,7 +131,7 @@ public class TabAdapter extends PagerAdapter
         this.service = service;
 
         for(Tab tab : service.getTabs())
-            onTabAdded(tab.getId());
+            onTabAdded(tab.id);
     }
 
     public void onTabLinesAdded(int tabId)

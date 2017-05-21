@@ -1,15 +1,16 @@
 apply plugin: 'com.android.application'
 
+
 android {
 	compileSdkVersion 25
-		buildToolsVersion "25.0.2"
-		defaultConfig {
-			applicationId "com.mniip.bananapeel"
-			minSdkVersion 9
-			targetSdkVersion 25
-			versionCode 1
-			testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-		}
+	buildToolsVersion "25.0.2"
+	defaultConfig {
+		applicationId "com.mniip.bananapeel"
+		minSdkVersion 9
+		targetSdkVersion 25
+		versionCode 1
+		testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+	}
 	buildTypes {
 		release {
 			minifyEnabled false

@@ -91,7 +91,8 @@ public class IRCConnection
 	{
 		if(hadError.compareAndSet(false, true))
 		{
-			sender.interrupt();
+			if(sender != null)
+				sender.interrupt();
 			if(receiver != null)
 				receiver.interrupt();
 
@@ -115,7 +116,8 @@ public class IRCConnection
 	{
 		hadError.set(true);
 
-		sender.interrupt();
+		if(sender != null)
+			sender.interrupt();
 		if(receiver != null)
 			receiver.interrupt();
 

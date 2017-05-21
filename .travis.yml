@@ -1,0 +1,21 @@
+language: android
+jdk: openjdk7
+sudo: false
+
+android:
+    components:
+        - platform-tools
+        - tools
+        - build-tools
+        - android-16
+        - extra-android-m2repository
+
+env:
+    global:
+        - SDK_PATH=/usr/local/android-sdk-24.0.2/
+        - SDK_BUILD_TOOLS=/usr/local/android-sdk-24.0.2/build-tools/21.1.2/
+        - LIB_AARS="/usr/local/android-sdk-24.0.2/extras/android/m2repository/com/android/support/support-v4/24.0.0/support-v4-24.0.0.aar /usr/local/android-sdk-24.0.2/extras/android/m2repository/com/android/support/recyclerview-v7/24.0.0/recyclerview-v7-24.0.0.aar"
+        - ANDROID_TARGET_SDK=10
+
+script:
+    - make

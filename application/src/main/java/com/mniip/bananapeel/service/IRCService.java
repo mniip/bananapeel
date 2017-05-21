@@ -117,7 +117,7 @@ public class IRCService extends Service
 
 	private void updatePositions(Tab tab)
 	{
-		int tabId = tab.getId();
+		int tabId = tab.id;
 
 		tabs.put(tabId, tab);
 
@@ -125,7 +125,7 @@ public class IRCService extends Service
 		for(int p = 0; p < tabIds.size(); p++)
 		{
 			Tab t = tabs.get(tabIds.get(p));
-			if(tab.getServerTab() == t)
+			if(tab.serverTab == t)
 				pos = p + 1;
 			if(t != null && t.getTitle().compareToIgnoreCase(tab.getTitle()) < 0)
 				pos = p + 1;
@@ -144,18 +144,18 @@ public class IRCService extends Service
 		updatePositions(tab);
 
 		if(listener != null)
-			listener.onTabAdded(tab.getId());
+			listener.onTabAdded(tab.id);
 		return tab;
 	}
 
-	public Tab createTab(ServerTab parent, String title)
+	public Tab createTab(ServerTab parent, Tab.Type type, String title)
 	{
-		Tab tab = new Tab(this, parent, unusedTabId++, title);
+		Tab tab = new Tab(this, parent, unusedTabId++, type, title);
 
 		updatePositions(tab);
 
 		if(listener != null)
-			listener.onTabAdded(tab.getId());
+			listener.onTabAdded(tab.id);
 		return tab;
 	}
 
@@ -182,7 +182,7 @@ public class IRCService extends Service
 	public Tab findTab(ServerTab sTab, String title)
 	{
 		for(Tab tab : tabs)
-			if(tab.getServerTab() == sTab && tab.getTitle().equalsIgnoreCase(title)) // TODO: casemapping here
+			if(tab.serverTab == sTab && tab.getTitle().equalsIgnoreCase(title)) // TODO: casemapping here
 				return tab;
 		return null;
 	}
@@ -202,7 +202,7 @@ public class IRCService extends Service
 	public void changeNickList(Tab tab)
 	{
 		if(listener != null)
-			listener.onTabNickListChanged(tab.getId());
+			listener.onTabNickListChanged(tab.id);
 	}
 
 
@@ -214,10 +214,10 @@ public class IRCService extends Service
 			if(str.length() > 0 && str.charAt(0) == '/')
 				onCommandEntered(t, str.substring(1));
 			else
-				if(t.getServerTab().server != null)
+				if(t.serverTab.server != null)
 				{
-					t.getServerTab().server.send(new IRCMessage("PRIVMSG", t.getTitle(), str));
-					t.putLine(new TextEvent(TextEvent.Type.OUR_MESSAGE, t.getServerTab().server.ourNick, str));
+					t.serverTab.server.send(new IRCMessage("PRIVMSG", t.getTitle(), str));
+					t.putLine(new TextEvent(TextEvent.Type.OUR_MESSAGE, t.serverTab.server.ourNick, str));
 				}
 		}
 	}
@@ -275,7 +275,7 @@ public class IRCService extends Service
 	{
 		public boolean invoke(Tab tab, CommandData data)
 		{
-			tab.getServerTab().server.send(IRCMessage.fromIRC(data.wordEols.get(0)));
+			tab.serverTab.server.send(IRCMessage.fromIRC(data.wordEols.get(0)));
 			return true;
 		}
 	};
@@ -284,20 +284,179 @@ public class IRCService extends Service
 
 	static
 	{
-		commandBins.add("SERVER", new Command()
+		commandBins.add("AWAY", new Command()
+		{
+			@Override
+			public boolean invoke(Tab tab, CommandData data)
+			{
+				if(data.words.size() > 1)
+					tab.serverTab.server.send(new IRCMessage("AWAY", data.wordEols.get(1)));
+				else
+					tab.serverTab.server.send(new IRCMessage("AWAY"));
+				return true;
+			}
+		});
+
+		commandBins.add("BACK", new Command()
 		{
 			public boolean invoke(Tab tab, CommandData data)
 			{
-				if(data.words.size() >= 1)
+				tab.serverTab.server.send(new IRCMessage("AWAY"));
+				return true;
+			}
+		});
+
+		commandBins.add("BAN", new Command()
+		{
+			public boolean invoke(Tab tab, CommandData data)
+			{
+				if(tab.type == Tab.Type.CHANNEL)
+					for(int i = 1; i < data.words.size(); i++)
+						tab.serverTab.server.send(new IRCMessage("MODE", tab.getTitle(), "+b", data.words.get(i)));
+				else
+					tab.putLine(new TextEvent(TextEvent.Type.ERROR, "/BAN needs to be executed in a channel"));
+				return true;
+			}
+		});
+
+		commandBins.add("CLOSE", new Command()
+		{
+			@Override
+			public boolean invoke(Tab tab, CommandData data)
+			{
+				if(tab.type == Tab.Type.QUERY)
+					tab.service.deleteTab(tab.id);
+				else if(tab.type == Tab.Type.CHANNEL)
 				{
-					String server = data.words.get(1);
-					IRCServerPreferences preferences = tab.getService().preferences.getServer(server);
-					if(preferences == null)
-						preferences = new IRCServerPreferences.Dummy(data.words.get(1), tab.getService().preferences, data.words.get(1), 6667);
-					IRCServer srv = tab.getServerTab().server;
-					srv.setPreferences(preferences);
-					srv.connect();
+					tab.serverTab.server.send(new IRCMessage("PART", tab.getTitle()));
+					tab.service.deleteTab(tab.id);
 				}
+				else if(tab.type == Tab.Type.SERVER)
+				{
+					// TODO
+				}
+				return true;
+			}
+		});
+
+		commandBins.add("CTCP", new Command()
+		{
+			public boolean invoke(Tab tab, CommandData data)
+			{
+				if(data.words.size() >= 2)
+				{
+					tab.serverTab.server.send(new IRCMessage("PRIVMSG", data.words.get(1), "\001ACTION " + data.wordEols.get(2) + "\001"));
+					tab.putLine(new TextEvent(TextEvent.Type.OUR_CTCP, data.words.get(1), data.wordEols.get(2)));
+				}
+				return true;
+			}
+		});
+
+		commandBins.add("DEHOP", new Command()
+		{
+			public boolean invoke(Tab tab, CommandData data)
+			{
+				if(tab.type == Tab.Type.CHANNEL)
+					for(int i = 1; i < data.words.size(); i++)
+						tab.serverTab.server.send(new IRCMessage("MODE", tab.getTitle(), "-h", data.words.get(i)));
+				else
+					tab.putLine(new TextEvent(TextEvent.Type.ERROR, "/DEHOP needs to be executed in a channel"));
+				return true;
+			}
+		});
+
+		commandBins.add("DEOP", new Command()
+		{
+			public boolean invoke(Tab tab, CommandData data)
+			{
+				if(tab.type == Tab.Type.CHANNEL)
+					for(int i = 1; i < data.words.size(); i++)
+						tab.serverTab.server.send(new IRCMessage("MODE", tab.getTitle(), "-o", data.words.get(i)));
+				else
+					tab.putLine(new TextEvent(TextEvent.Type.ERROR, "/DEOP needs to be executed in a channel"));
+				return true;
+			}
+		});
+
+		commandBins.add("DEVOICE", new Command()
+		{
+			public boolean invoke(Tab tab, CommandData data)
+			{
+				if(tab.type == Tab.Type.CHANNEL)
+					for(int i = 1; i < data.words.size(); i++)
+						tab.serverTab.server.send(new IRCMessage("MODE", tab.getTitle(), "-v", data.words.get(i)));
+				else
+					tab.putLine(new TextEvent(TextEvent.Type.ERROR, "/DEVOICE needs to be executed in a channel"));
+				return true;
+			}
+		});
+
+		commandBins.add("DISCON", new Command()
+		{
+			public boolean invoke(Tab tab, CommandData data)
+			{
+				tab.serverTab.server.disconnect("");
+				return true;
+			}
+		});
+
+		commandBins.add("HOP", new Command()
+		{
+			public boolean invoke(Tab tab, CommandData data)
+			{
+				if(tab.type == Tab.Type.CHANNEL)
+					for(int i = 1; i < data.words.size(); i++)
+						tab.serverTab.server.send(new IRCMessage("MODE", tab.getTitle(), "+h", data.words.get(i)));
+				else
+					tab.putLine(new TextEvent(TextEvent.Type.ERROR, "/HOP needs to be executed in a channel"));
+				return true;
+			}
+		});
+
+		commandBins.add("INVITE", new Command()
+		{
+			public boolean invoke(Tab tab, CommandData data)
+			{
+				if(data.words.size() > 1)
+				{
+					if(data.words.size() > 2)
+						tab.serverTab.server.send(new IRCMessage("INVITE", data.words.get(1), data.words.get(2)));
+					else
+						if(tab.type == Tab.Type.CHANNEL)
+							tab.serverTab.server.send(new IRCMessage("INVITE", data.words.get(1), tab.getTitle()));
+						else
+							tab.putLine(new TextEvent(TextEvent.Type.ERROR, "No channel specified"));
+				}
+				return true;
+			}
+		});
+
+		commandBins.add("JOIN", new Command()
+		{
+			public boolean invoke(Tab tab, CommandData data)
+			{
+				tab.serverTab.server.send(IRCMessage.fromIRC(data.wordEols.get(0)));
+				return true;
+			}
+		});
+
+		commandBins.add("KICK", new Command()
+		{
+			public boolean invoke(Tab tab, CommandData data)
+			{
+				if(data.words.size() > 1)
+					if(data.words.size() > 2 && tab.serverTab.server.config.isChannel(data.words.get(1)))
+						if(data.words.size() > 3)
+							tab.serverTab.server.send(new IRCMessage("KICK", data.words.get(1), data.words.get(2), data.wordEols.get(3)));
+						else
+							tab.serverTab.server.send(new IRCMessage("KICK", data.words.get(1), data.words.get(2)));
+					else if(tab.type == Tab.Type.CHANNEL)
+						if(data.words.size() > 2)
+							tab.serverTab.server.send(new IRCMessage("KICK", tab.getTitle(), data.words.get(1), data.wordEols.get(2)));
+						else
+							tab.serverTab.server.send(new IRCMessage("KICK", tab.getTitle(), data.words.get(1)));
+					else
+						tab.putLine(new TextEvent(TextEvent.Type.ERROR, "No channel specified"));
 				return true;
 			}
 		});
@@ -306,8 +465,199 @@ public class IRCService extends Service
 		{
 			public boolean invoke(Tab tab, CommandData data)
 			{
-				tab.getServerTab().server.send(new IRCMessage("PRIVMSG", tab.getTitle(), "\001ACTION " + data.wordEols.get(1) + "\001"));
-				tab.putLine(new TextEvent(TextEvent.Type.OUR_CTCP_ACTION, tab.getServerTab().server.ourNick, data.wordEols.get(1)));
+				if(data.words.size() > 1)
+				{
+					tab.serverTab.server.send(new IRCMessage("PRIVMSG", tab.getTitle(), "\001ACTION " + data.wordEols.get(1) + "\001"));
+					tab.putLine(new TextEvent(TextEvent.Type.OUR_CTCP_ACTION, tab.serverTab.server.ourNick, data.wordEols.get(1)));
+				}
+				return true;
+			}
+		});
+
+		commandBins.add("MODE", new Command()
+		{
+			public boolean invoke(Tab tab, CommandData data)
+			{
+				if(data.words.size() > 1 && tab.serverTab.server.config.isChannel(data.words.get(1)))
+					if(data.words.size() > 2)
+						tab.serverTab.server.send(new IRCMessage("MODE", data.words.get(1), data.wordEols.get(2)));
+					else
+						tab.serverTab.server.send(new IRCMessage("MODE", data.words.get(1)));
+				else if(tab.type == Tab.Type.CHANNEL)
+					if(data.words.size() > 1)
+						tab.serverTab.server.send(new IRCMessage("MODE", tab.getTitle(), data.wordEols.get(1)));
+					else
+						tab.serverTab.server.send(new IRCMessage("MODE", tab.getTitle()));
+				else
+					tab.putLine(new TextEvent(TextEvent.Type.ERROR, "No channel specified"));
+				return true;
+			}
+		});
+
+		commandBins.add("MSG", new Command()
+		{
+			public boolean invoke(Tab tab, CommandData data)
+			{
+				if(data.words.size() > 2)
+				{
+					tab.serverTab.server.send(new IRCMessage("PRIVMSG", data.words.get(1), data.wordEols.get(2)));
+					tab.putLine(new TextEvent(TextEvent.Type.OUR_MSG, data.words.get(1), data.wordEols.get(2)));
+				}
+				return true;
+			}
+		});
+
+		commandBins.add("NICK", new Command()
+		{
+			public boolean invoke(Tab tab, CommandData data)
+			{
+				if(data.words.size() > 1)
+					tab.serverTab.server.send(new IRCMessage("NICK", data.words.get(1)));
+				return true;
+			}
+		});
+
+		commandBins.add("NOTICE", new Command()
+		{
+			public boolean invoke(Tab tab, CommandData data)
+			{
+				if(data.words.size() > 2)
+				{
+					tab.serverTab.server.send(new IRCMessage("NOTICE", data.words.get(1), data.wordEols.get(2)));
+					tab.putLine(new TextEvent(TextEvent.Type.OUR_NOTICE, data.words.get(1), data.wordEols.get(2)));
+				}
+				return true;
+			}
+		});
+
+		commandBins.add("OP", new Command()
+		{
+			public boolean invoke(Tab tab, CommandData data)
+			{
+				if(tab.type == Tab.Type.CHANNEL)
+					for(int i = 1; i < data.words.size(); i++)
+						tab.serverTab.server.send(new IRCMessage("MODE", tab.getTitle(), "+o", data.words.get(i)));
+				else
+					tab.putLine(new TextEvent(TextEvent.Type.ERROR, "/OP needs to be executed in a channel"));
+				return true;
+			}
+		});
+
+		commandBins.add("PART", new Command()
+		{
+			public boolean invoke(Tab tab, CommandData data)
+			{
+				if(data.words.size() > 1 && tab.serverTab.server.config.isChannel(data.words.get(1)))
+					if(data.words.size() > 2)
+						tab.serverTab.server.send(new IRCMessage("PART", data.words.get(1), data.wordEols.get(2)));
+					else
+						tab.serverTab.server.send(new IRCMessage("PART", data.words.get(1)));
+				else if(tab.type == Tab.Type.CHANNEL)
+					if(data.words.size() > 1)
+						tab.serverTab.server.send(new IRCMessage("PART", tab.getTitle(), data.wordEols.get(1)));
+					else
+						tab.serverTab.server.send(new IRCMessage("PART", tab.getTitle()));
+				else
+					tab.putLine(new TextEvent(TextEvent.Type.ERROR, "No channel specified"));
+				return true;
+			}
+		});
+
+		commandBins.add("QUERY", new Command()
+		{
+			public boolean invoke(Tab tab, CommandData data)
+			{
+				if(data.words.size() > 1)
+				{
+					Tab t = tab.service.findTab(tab.serverTab, data.words.get(1));
+					if(t == null)
+						t = tab.service.createTab(tab.serverTab, Tab.Type.QUERY, data.words.get(1));
+					if(data.words.size() > 2)
+					{
+						t.serverTab.server.send(new IRCMessage("PRIVMSG", data.words.get(1), data.wordEols.get(2)));
+						t.putLine(new TextEvent(TextEvent.Type.OUR_MESSAGE, t.serverTab.server.ourNick, data.wordEols.get(2)));
+					}
+				}
+				return true;
+			}
+		});
+
+		commandBins.add("QUIT", new Command()
+		{
+			public boolean invoke(Tab tab, CommandData data)
+			{
+				if(data.words.size() > 1)
+					tab.serverTab.server.send(new IRCMessage("QUIT", data.wordEols.get(1)));
+				else
+					tab.serverTab.server.send(new IRCMessage("QUIT"));
+				return true;
+			}
+		});
+
+		commandBins.add("QUOTE", new Command()
+		{
+			public boolean invoke(Tab tab, CommandData data)
+			{
+				if(data.words.size() > 1)
+					tab.serverTab.server.send(IRCMessage.fromIRC(data.wordEols.get(1)));
+				return true;
+			}
+		});
+
+		commandBins.add("SERVER", new Command()
+		{
+			public boolean invoke(Tab tab, CommandData data)
+			{
+				if(data.words.size() >= 1)
+				{
+					String server = data.words.get(1);
+					IRCServerPreferences preferences = tab.service.preferences.getServer(server);
+					if(preferences == null)
+						preferences = new IRCServerPreferences.Dummy(data.words.get(1), tab.service.preferences, data.words.get(1), 6667);
+					IRCServer srv = tab.serverTab.server;
+					srv.setPreferences(preferences);
+					srv.connect();
+				}
+				return true;
+			}
+		});
+
+		commandBins.add("TOPIC", new Command()
+		{
+			public boolean invoke(Tab tab, CommandData data)
+			{
+				if(data.words.size() > 1 && tab.serverTab.server.config.isChannel(data.words.get(1)))
+					tab.serverTab.server.send(new IRCMessage("TOPIC", data.words.get(1), data.wordEols.get(2)));
+				else if(tab.type == Tab.Type.CHANNEL)
+					tab.serverTab.server.send(new IRCMessage("TOPIC", tab.getTitle(), data.wordEols.get(1)));
+				else
+					tab.putLine(new TextEvent(TextEvent.Type.ERROR, "No channel specified"));
+				return true;
+			}
+		});
+
+		commandBins.add("UNBAN", new Command()
+		{
+			public boolean invoke(Tab tab, CommandData data)
+			{
+				if(tab.type == Tab.Type.CHANNEL)
+					for(int i = 1; i < data.words.size(); i++)
+						tab.serverTab.server.send(new IRCMessage("MODE", tab.getTitle(), "-b", data.words.get(i)));
+				else
+					tab.putLine(new TextEvent(TextEvent.Type.ERROR, "/UNBAN needs to be executed in a channel"));
+				return true;
+			}
+		});
+
+		commandBins.add("VOICE", new Command()
+		{
+			public boolean invoke(Tab tab, CommandData data)
+			{
+				if(tab.type == Tab.Type.CHANNEL)
+					for(int i = 1; i < data.words.size(); i++)
+						tab.serverTab.server.send(new IRCMessage("MODE", tab.getTitle(), "+v", data.words.get(i)));
+				else
+					tab.putLine(new TextEvent(TextEvent.Type.ERROR, "/VOICE needs to be executed in a channel"));
 				return true;
 			}
 		});

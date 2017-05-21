@@ -1,7 +1,6 @@
 package com.mniip.bananapeel.ui;
 
 import android.app.AlertDialog;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -9,9 +8,6 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.util.ArrayMap;
-import android.support.v4.util.SimpleArrayMap;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
@@ -27,12 +23,11 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.mniip.bananapeel.service.IRCService;
-import com.mniip.bananapeel.service.Tab;
 import com.mniip.bananapeel.util.NickListEntry;
 import com.mniip.bananapeel.R;
 import com.mniip.bananapeel.ServiceApplication;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Set;
 
 public class MainScreen extends FragmentActivity
@@ -90,7 +85,7 @@ public class MainScreen extends FragmentActivity
 		}
 	};
 
-	private IRCService getService()
+	public IRCService getService()
 	{
 		return ServiceApplication.getService();
 	}
@@ -178,6 +173,18 @@ public class MainScreen extends FragmentActivity
 		}
 	}
 
+	private static class Pair
+	{
+		public final String descr;
+		public final String cmd;
+
+		public Pair(String descr, String cmd)
+		{
+			this.descr = descr;
+			this.cmd = cmd;
+		}
+	}
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
@@ -216,30 +223,32 @@ public class MainScreen extends FragmentActivity
 				final String nick = ((TextView)view).getText().toString();
 				AlertDialog.Builder builder = new AlertDialog.Builder(MainScreen.this);
 
-				final ArrayMap<String, String> actions = new ArrayMap<String, String>();//todo: write my class
-				actions.put("Private message", "/privmsg");
-				actions.put("WhoIs", "/whois");
-				actions.put("Kick", "/kick");
-				actions.put("Ping", "/ping");
-				actions.put("Give op", "/op");
-				actions.put("Give voice", "/voice");
-				actions.put("Take op", "/deop");
-				actions.put("Take voice","/devoice");
+				final ArrayList<Pair> actions = new ArrayList<Pair>();
+				actions.add(new Pair("Private message", "/query"));
+				actions.add(new Pair("WhoIs", "/whois"));
+				actions.add(new Pair("Kick", "/kick"));
+				actions.add(new Pair("Ping", "/ping"));
+				actions.add(new Pair("Give op", "/op"));
+				actions.add(new Pair("Give voice", "/voice"));
+				actions.add(new Pair("Take op", "/deop"));
+				actions.add(new Pair("Take voice","/devoice"));
+				actions.add(new Pair("Ban","/ban"));
+				actions.add(new Pair("Unban","/unban"));
 
 				builder.setTitle("Action list");
-				Set<String> keys = actions.keySet();
-				builder.setItems(keys.toArray(new String[keys.size()]), new DialogInterface.OnClickListener()
+				String descriptions[] = new String[actions.size()];
+				for (int i = 0; i < actions.size(); ++i)
+					descriptions[i] = actions.get(i).descr;
+
+				builder.setItems(descriptions, new DialogInterface.OnClickListener()
 				{
 					@Override
 					public void onClick(DialogInterface dialog, int which)
 					{
 						if (which < actions.size())
 						{
-							actions.valueAt(which);
-							{
-								int curTabId = tabAdapter.getCurTab().getTabId();
-								getService().onTextEntered(curTabId, actions.valueAt(which) + ' ' + nick);
-							}
+							int curTabId = tabAdapter.getCurTab().getTabId();
+							getService().onTextEntered(curTabId, actions.get(which).cmd + ' ' + nick);
 						}
 					}
 				});
@@ -252,7 +261,7 @@ public class MainScreen extends FragmentActivity
 			@Override
 			public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id)
 			{
-				String nick = ((TextView)view).getText().toString();
+				String nick = getService().getFrontTab().nickList.getSecondary(position).nick;
 				EditText inputText = tabAdapter.getCurTab().getInputText();
 
 				int start = Math.max(inputText.getSelectionStart(), 0);

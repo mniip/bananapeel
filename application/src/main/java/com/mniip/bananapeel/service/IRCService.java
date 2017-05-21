@@ -192,6 +192,14 @@ public class IRCService extends Service
 		return frontTab;
 	}
 
+	public Tab getFrontServerTab(IRCServer srv)
+	{
+		if(frontTab.serverTab.server == srv)
+			return frontTab;
+		else
+			return srv.tab;
+	}
+
 	public void setFrontTab(int tabId)
 	{
 		Tab tab = tabs.get(tabId);

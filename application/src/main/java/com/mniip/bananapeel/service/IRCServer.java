@@ -420,6 +420,74 @@ public class IRCServer
 				return false;
 			}
 		});
+
+		Require whoisData = new Require(new Command()
+		{
+			@Override
+			public boolean invoke(IRCServer srv, IRCMessage msg)
+			{
+				srv.service.getFrontServerTab(srv).putLine(new TextEvent(WHOIS_DATA, msg.args[1], msg.args[2]));
+				return true;
+			}
+		}).needArgs(3);
+		for(String bin : Arrays.asList("276", "313", "318", "319", "320", "671"))
+			commandBins.add(bin, whoisData);
+
+		commandBins.add("311", new Require(new Command()
+		{
+			@Override
+			public boolean invoke(IRCServer srv, IRCMessage msg)
+			{
+				srv.service.getFrontServerTab(srv).putLine(new TextEvent(WHOIS_USERHOST, msg.args[1], msg.args[2], msg.args[3], msg.args[5]));
+				return true;
+			}
+		}).needArgs(6));
+
+		commandBins.add("312", new Require(new Command()
+		{
+			@Override
+			public boolean invoke(IRCServer srv, IRCMessage msg)
+			{
+				srv.service.getFrontServerTab(srv).putLine(new TextEvent(WHOIS_DATA, msg.args[1], msg.args[2] + ", " + msg.args[3]));
+				return true;
+			}
+		}).needArgs(4));
+
+		commandBins.add("317", new Require(new Command()
+		{
+			@Override
+			public boolean invoke(IRCServer srv, IRCMessage msg)
+			{
+				String idle = msg.args[2];
+				try
+				{
+					long total = Long.valueOf(idle);
+					idle = String.format("%02d:%02d:%02d", total / 3600, total / 60 % 60, total % 60);
+				}
+				catch(NumberFormatException e) {}
+
+				String signon = msg.args[3];
+				try
+				{
+					Date date = new Date(Long.valueOf(signon) * 1000);
+					signon = String.format("%tc", date);
+				}
+				catch(NumberFormatException e) {}
+
+				srv.service.getFrontServerTab(srv).putLine(new TextEvent(WHOIS_IDLE, msg.args[1], idle, signon));
+				return true;
+			}
+		}).needArgs(4));
+
+		commandBins.add("330", new Require(new Command()
+		{
+			@Override
+			public boolean invoke(IRCServer srv, IRCMessage msg)
+			{
+				srv.service.getFrontServerTab(srv).putLine(new TextEvent(WHOIS_LOGIN, msg.args[1], msg.args[2]));
+				return true;
+			}
+		}).needArgs(3));
 	}
 
 	private void startSASL()
@@ -491,7 +559,7 @@ public class IRCServer
 
 					String request = "";
 
-					List<String> wantCaps = new ArrayList<>(Arrays.asList("account-notify", "extended-join", "multi-prefix", "server-time", "znc.in/server-time", "znc.in/server-time-iso"));
+					List<String> wantCaps = Arrays.asList("account-notify", "extended-join", "multi-prefix", "server-time", "znc.in/server-time", "znc.in/server-time-iso");
 					if(srv.preferences.getAuthMode().equals("sasl"))
 						wantCaps.add("sasl");
 					for(String cap : wantCaps)
@@ -667,9 +735,9 @@ public class IRCServer
 				if(srv.config.nickCollator.equals(target, srv.ourNick))
 				{
 					if(text.length() >= 2 && text.charAt(0) == '\001' && text.charAt(text.length() - 1) == '\001')
-						srv.service.getFrontTab().putLine(new TextEvent(time, CTCP_REPLY, nick, text.substring(1, text.length() - 1)));
+						srv.service.getFrontServerTab(srv).putLine(new TextEvent(time, CTCP_REPLY, nick, text.substring(1, text.length() - 1)));
 					else
-						srv.service.getFrontTab().putLine(new TextEvent(time, NOTICE, nick, text));
+						srv.service.getFrontServerTab(srv).putLine(new TextEvent(time, NOTICE, nick, text));
 					return true;
 				}
 				else
@@ -757,9 +825,9 @@ public class IRCServer
 			}
 
 		if(srv.config.nickCollator.equals(target, srv.ourNick))
-			srv.service.getFrontTab().putLine(new TextEvent(CTCP_PRIVATE, nick, command, args));
+			srv.service.getFrontServerTab(srv).putLine(new TextEvent(CTCP_PRIVATE, nick, command, args));
 		else
-			srv.service.getFrontTab().putLine(new TextEvent(CTCP_CHANNEL, nick, command, args, target));
+			srv.service.getFrontServerTab(srv).putLine(new TextEvent(CTCP_CHANNEL, nick, command, args, target));
 
 		if(command.equalsIgnoreCase("VERSION"))
 			sendCTCPReply(srv, nick, "VERSION " + srv.service.getString(R.string.app_name));

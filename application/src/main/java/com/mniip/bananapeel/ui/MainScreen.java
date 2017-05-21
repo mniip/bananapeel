@@ -109,7 +109,7 @@ public class MainScreen extends FragmentActivity
 
 			if (service.getFrontTab().nickList != null)
 			{
-				View nickList = (View)findViewById(R.id.nick_list);
+				View nickList = findViewById(R.id.nick_list);
 				DrawerLayout drawerLayout = (DrawerLayout)findViewById(R.id.drawerLayout);
 				drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, nickList);
 			}

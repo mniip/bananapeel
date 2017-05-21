@@ -39,6 +39,10 @@ public class TextEvent
 		CTCP_CHANNEL,
 		OUR_CTCP,
 		CTCP_REPLY,
+		WHOIS_DATA,
+		WHOIS_USERHOST,
+		WHOIS_LOGIN,
+		WHOIS_IDLE,
 	}
 
 	private final Date timestamp;
@@ -128,8 +132,12 @@ public class TextEvent
 		templates.put(OUR_CTCP_ACTION, IRCFormatting.parse("* \00304$2$0\017 $1"));
 		templates.put(CTCP_PRIVATE, IRCFormatting.parse("* $0 requested CTCP $1 $2"));
 		templates.put(CTCP_CHANNEL, IRCFormatting.parse("* $0 requested CTCP $1 $2"));
-		templates.put(OUR_CTCP, IRCFormatting.parse("* Requested CTCP $2 from $1"));
-		templates.put(CTCP_REPLY, IRCFormatting.parse("* CTCP reply $2 from $1"));
+		templates.put(OUR_CTCP, IRCFormatting.parse("* Requested CTCP $1 from $0"));
+		templates.put(CTCP_REPLY, IRCFormatting.parse("* CTCP reply $1 from $0"));
+		templates.put(WHOIS_DATA, IRCFormatting.parse("\00307* \00310$0\017 $1"));
+		templates.put(WHOIS_USERHOST, IRCFormatting.parse("\00307* \00310$0\017\00307!$1@$2\017 $3"));
+		templates.put(WHOIS_LOGIN, IRCFormatting.parse("\00307* \00310$0\017 is logged in as \00310$1\017"));
+		templates.put(WHOIS_IDLE, IRCFormatting.parse("\00307* \00310$0\017 idle $1, signed on $2"));
 	}
 
 	private static final DateFormat timestampFormatter = new SimpleDateFormat("[HH:mm:ss] ");

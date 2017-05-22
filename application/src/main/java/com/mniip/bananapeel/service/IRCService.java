@@ -269,7 +269,7 @@ public class IRCService extends Service
 
 	abstract private static class Command implements Hook<Tab, CommandData> {}
 
-	private static Hook.Binned<String, Tab, CommandData> commandBins = new Hook.Binned<String, Tab, CommandData>()
+	public static final Hook.Binned<String, Tab, CommandData> commandBins = new Hook.Binned<String, Tab, CommandData>()
 	{
 		public String resolve(CommandData data)
 		{

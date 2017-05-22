@@ -188,6 +188,8 @@ public class MainScreen extends FragmentActivity
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
+		mSavedInstanceState = savedInstanceState;
+
 		Log.d("BananaPeel", "MainActivity created");
 		super.onCreate(savedInstanceState);
 
@@ -282,7 +284,6 @@ public class MainScreen extends FragmentActivity
 		DrawerLayout drawerLayout = (DrawerLayout)findViewById(R.id.drawerLayout);
 		drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, nickList);
 
-		mSavedInstanceState = savedInstanceState;
 	}
 
 	@Override

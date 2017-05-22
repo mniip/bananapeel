@@ -24,7 +24,9 @@ public class Collators
 	{
 		try
 		{
-			return new RuleBasedCollator(RFC1459_RULES);
+			RuleBasedCollator collator = new RuleBasedCollator(RFC1459_RULES);
+			collator.setStrength(Collator.SECONDARY);
+			return collator;
 		}
 		catch(ParseException e)
 		{
@@ -36,7 +38,9 @@ public class Collators
 	{
 		try
 		{
-			return new RuleBasedCollator(ASCII_RULES);
+			RuleBasedCollator collator = new RuleBasedCollator(ASCII_RULES);
+			collator.setStrength(Collator.SECONDARY);
+			return collator;
 		}
 		catch(ParseException e)
 		{

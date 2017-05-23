@@ -1,7 +1,6 @@
 package com.mniip.bananapeel.ui;
 
 import android.app.AlertDialog;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -9,9 +8,6 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.util.ArrayMap;
-import android.support.v4.util.SimpleArrayMap;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
@@ -27,18 +23,18 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.mniip.bananapeel.service.IRCService;
-import com.mniip.bananapeel.service.Tab;
 import com.mniip.bananapeel.util.NickListEntry;
 import com.mniip.bananapeel.R;
 import com.mniip.bananapeel.ServiceApplication;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Set;
 
 public class MainScreen extends FragmentActivity
 {
 	private TabAdapter tabAdapter;
 	private NickListAdapter nickListAdapter;
+	private ChannelListAdapter channelListAdapter;
 
 	Bundle mSavedInstanceState;
 
@@ -46,6 +42,7 @@ public class MainScreen extends FragmentActivity
 	{
 		return tabAdapter;
 	}
+
 	public NickListAdapter getNickListAdapter()
 	{
 		return nickListAdapter;
@@ -69,18 +66,21 @@ public class MainScreen extends FragmentActivity
 		public void onTabAdded(int tabId)
 		{
 			tabAdapter.onTabAdded(tabId);
+			channelListAdapter.onChannelListChanged();
 		}
 
 		@Override
 		public void onTabRemoved(int tabId)
 		{
 			tabAdapter.onTabRemoved(tabId);
+			channelListAdapter.onChannelListChanged();
 		}
 
 		@Override
 		public void onTabTitleChanged(int tabId)
 		{
 			tabAdapter.onTabTitleChanged(tabId);
+			channelListAdapter.onChannelListChanged();
 		}
 
 		@Override
@@ -90,7 +90,7 @@ public class MainScreen extends FragmentActivity
 		}
 	};
 
-	private IRCService getService()
+	public IRCService getService()
 	{
 		return ServiceApplication.getService();
 	}
@@ -106,13 +106,26 @@ public class MainScreen extends FragmentActivity
 			ViewGroup group = (ViewGroup)findViewById(R.id.pager_container);
 			LayoutInflater.from(MainScreen.this).inflate(R.layout.pager, group, true);
 
-			ViewPager pager = (ViewPager)group.findViewById(R.id.view_pager);
+			final ViewPager pager = (ViewPager)group.findViewById(R.id.view_pager);
 			tabAdapter = new TabAdapter(getSupportFragmentManager(), MainScreen.this, service);
-			if (mSavedInstanceState != null)
+			if(mSavedInstanceState != null)
 				pager.onRestoreInstanceState(mSavedInstanceState.getParcelable(((Integer)R.id.view_pager).toString()));
 			pager.setAdapter(tabAdapter);
 
-			if (service.getFrontTab().nickList != null)
+			ListView channelList = (ListView)findViewById(R.id.channel_list);
+			channelListAdapter = new ChannelListAdapter();
+			channelList.setAdapter(channelListAdapter);
+
+			channelList.setOnItemClickListener(new AdapterView.OnItemClickListener()
+			{
+				@Override
+				public void onItemClick(AdapterView<?> parent, View view, int position, long id)
+				{
+					pager.setCurrentItem(position, false);
+				}
+			});
+
+			if(service.getFrontTab().nickList != null)
 			{
 				View nickList = findViewById(R.id.nick_list);
 				DrawerLayout drawerLayout = (DrawerLayout)findViewById(R.id.drawerLayout);
@@ -126,6 +139,45 @@ public class MainScreen extends FragmentActivity
 			getService().unsetListener(ircInterfaceListener);
 		}
 	};
+
+	public class ChannelListAdapter extends BaseAdapter
+	{
+		@Override
+		public int getCount()
+		{
+			IRCService service = getService();
+			if(service == null || service.getTabs() == null)
+				return 0;
+			return service.getTabsCount();
+		}
+
+		@Override
+		public Object getItem(int position)
+		{
+			return getService().getTabByPosition(position);
+		}
+
+		@Override
+		public long getItemId(int position)
+		{
+			return getService().getTabByPosition(position).id;
+		}
+
+		@Override
+		public View getView(int position, View convertView, ViewGroup parent)
+		{
+			if(convertView == null)
+				convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.channel_line, parent, false);
+
+			((TextView)convertView).setText(getService().getTabByPosition(position).getTitle());
+			return convertView;
+		}
+
+		public void onChannelListChanged()
+		{
+			notifyDataSetChanged();
+		}
+	}
 
 	public class NickListAdapter extends BaseAdapter
 	{
@@ -178,9 +230,23 @@ public class MainScreen extends FragmentActivity
 		}
 	}
 
+	private static class CmdPair
+	{
+		public final String descr;
+		public final String cmd;
+
+		public CmdPair(String descr, String cmd)
+		{
+			this.descr = descr;
+			this.cmd = cmd;
+		}
+	}
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
+		mSavedInstanceState = savedInstanceState;
+
 		Log.d("BananaPeel", "MainActivity created");
 		super.onCreate(savedInstanceState);
 
@@ -213,33 +279,35 @@ public class MainScreen extends FragmentActivity
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id)
 			{
-				final String nick = ((TextView)view).getText().toString();
+				final String nick = getService().getFrontTab().nickList.getSecondary(position).nick;
 				AlertDialog.Builder builder = new AlertDialog.Builder(MainScreen.this);
 
-				final ArrayMap<String, String> actions = new ArrayMap<String, String>();//todo: write my class
-				actions.put("Private message", "/privmsg");
-				actions.put("WhoIs", "/whois");
-				actions.put("Kick", "/kick");
-				actions.put("Ping", "/ping");
-				actions.put("Give op", "/op");
-				actions.put("Give voice", "/voice");
-				actions.put("Take op", "/deop");
-				actions.put("Take voice","/devoice");
+				final ArrayList<CmdPair> actions = new ArrayList<CmdPair>();
+				actions.add(new CmdPair("Private message", "/query"));
+				actions.add(new CmdPair("WhoIs", "/whois"));
+				actions.add(new CmdPair("Kick", "/kick"));
+				actions.add(new CmdPair("Ping", "/ping"));
+				actions.add(new CmdPair("Give op", "/op"));
+				actions.add(new CmdPair("Give voice", "/voice"));
+				actions.add(new CmdPair("Take op", "/deop"));
+				actions.add(new CmdPair("Take voice","/devoice"));
+				actions.add(new CmdPair("Ban","/ban"));
+				actions.add(new CmdPair("Unban","/unban"));
 
 				builder.setTitle("Action list");
-				Set<String> keys = actions.keySet();
-				builder.setItems(keys.toArray(new String[keys.size()]), new DialogInterface.OnClickListener()
+				String descriptions[] = new String[actions.size()];
+				for (int i = 0; i < actions.size(); ++i)
+					descriptions[i] = actions.get(i).descr;
+
+				builder.setItems(descriptions, new DialogInterface.OnClickListener()
 				{
 					@Override
 					public void onClick(DialogInterface dialog, int which)
 					{
 						if (which < actions.size())
 						{
-							actions.valueAt(which);
-							{
-								int curTabId = tabAdapter.getCurTab().getTabId();
-								getService().onTextEntered(curTabId, actions.valueAt(which) + ' ' + nick);
-							}
+							int curTabId = tabAdapter.getCurTab().getTabId();
+							getService().onTextEntered(curTabId, actions.get(which).cmd + ' ' + nick);
 						}
 					}
 				});
@@ -252,7 +320,7 @@ public class MainScreen extends FragmentActivity
 			@Override
 			public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id)
 			{
-				String nick = ((TextView)view).getText().toString();
+				String nick = getService().getFrontTab().nickList.getSecondary(position).nick;
 				EditText inputText = tabAdapter.getCurTab().getInputText();
 
 				int start = Math.max(inputText.getSelectionStart(), 0);
@@ -272,8 +340,6 @@ public class MainScreen extends FragmentActivity
 
 		DrawerLayout drawerLayout = (DrawerLayout)findViewById(R.id.drawerLayout);
 		drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, nickList);
-
-		mSavedInstanceState = savedInstanceState;
 	}
 
 	@Override

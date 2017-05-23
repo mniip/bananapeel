@@ -51,7 +51,7 @@ public class IRCService extends Service
 		}
 	}
 
-	public int getPosById(int id)
+	public Integer getPosById(int id)
 	{
 		return tabPositions.get(id);
 	}
@@ -173,9 +173,11 @@ public class IRCService extends Service
 					if(kv.getValue() > tabPos)
 						kv.setValue(kv.getValue() - 1);
 			}
-			if(listener != null)
-				listener.onTabRemoved(tabId);
 			tabs.delete(tabId);
+			if(listener != null)
+			{
+				listener.onTabRemoved(tabId);
+			}
 		}
 	}
 
@@ -269,7 +271,7 @@ public class IRCService extends Service
 
 	abstract private static class Command implements Hook<Tab, CommandData> {}
 
-	private static Hook.Binned<String, Tab, CommandData> commandBins = new Hook.Binned<String, Tab, CommandData>()
+	public static final Hook.Binned<String, Tab, CommandData> commandBins = new Hook.Binned<String, Tab, CommandData>()
 	{
 		public String resolve(CommandData data)
 		{

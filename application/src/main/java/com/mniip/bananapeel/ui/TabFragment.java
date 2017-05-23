@@ -15,7 +15,13 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.mniip.bananapeel.R;
-import com.mniip.bananapeel.ServiceApplication;
+import com.mniip.bananapeel.service.Tab;
+import com.mniip.bananapeel.util.NickListEntry;
+import com.mniip.bananapeel.util.TextEvent;
+
+import java.text.Collator;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TabFragment extends Fragment
 {
@@ -24,6 +30,7 @@ public class TabFragment extends Fragment
     private boolean active = true;
     private TextLineAdapter adapter;
     private SelectableScrollbackView scrollback;
+    private MainScreen mainScreen;
 
     private EditText inputText;
 
@@ -70,6 +77,7 @@ public class TabFragment extends Fragment
 
         View view = inflater.inflate(R.layout.tab_fragment, parent, false);
 
+        mainScreen = (MainScreen)getActivity();
         scrollback = (SelectableScrollbackView)view.findViewById(R.id.recycler);
         LinearLayoutManager manager = new LinearLayoutManager(scrollback.getContext());
         manager.setStackFromEnd(true);
@@ -105,26 +113,104 @@ public class TabFragment extends Fragment
             }
         });
 
-        ImageButton button = (ImageButton)view.findViewById(R.id.send_button);
-        button.setOnClickListener(new View.OnClickListener()
+        ImageButton sendButton = (ImageButton)view.findViewById(R.id.send_button);
+        sendButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View v)
             {
-                EditText edit = (EditText)((ViewGroup)v.getParent()).findViewById(R.id.input_box);
-                sendInput(edit);
+                sendInput(inputText);
+            }
+        });
+
+        ImageButton searchButton = (ImageButton)view.findViewById(R.id.search_button);
+        searchButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                Tab tab = mainScreen.getService().getTabById(tabId);
+
+                if(tab.nickList == null) //todo: channel completion etc
+                    return;
+
+                String text = inputText.getText().toString();
+                int cur = inputText.getSelectionEnd();
+                int begin = cur;
+
+                while (begin > 0 && !Character.isSpaceChar(text.charAt(begin - 1)) )
+                    --begin;
+
+                String word = text.substring(begin, cur);
+
+                ArrayList<String> list = new ArrayList<String>();
+
+                if (tab.serverTab.server.config.isChannel(word));// todo: channellist
+                else if (word != "" && begin == 0 && word.charAt(begin) == '/');// todo: commandlist
+                else
+                {
+                    for(NickListEntry nick : tab.nickList)
+                        list.add(nick.nick);
+                }
+
+                Collator collator = tab.serverTab.server.config.nickCollator;
+                ArrayList<String> result = new ArrayList<String>();
+
+                String minStr = null;
+                int wordLen = word.length();
+
+                for(String nick : list)
+                {
+                    int nickLen = nick.length();
+
+                    String nickStr = (nickLen > wordLen)? nick.substring(0, word.length()): nick    ;
+                    if(collator.equals(nickStr, word))
+                    {
+                         result.add(nick);
+
+                        if(minStr == null || nickLen < minStr.length())
+                            minStr = nick;
+                    }
+                }
+
+                if(result.size() == 1)
+                    inputText.getText().replace(begin, cur, result.get(0) + ", ");
+
+                else if(result.size() > 1)
+                {
+                    String toSend = "";
+
+                    for(String nick : result)
+                        toSend += (toSend.isEmpty())? nick : " " + nick;
+
+                    if (wordLen == minStr.length())
+                        inputText.getText().replace(begin, cur, minStr);
+                    else
+
+                    OUTER : for(int i = minStr.length(); i > wordLen; --i)
+                    {
+                        for (String nick : result)
+                        {
+                            if (! collator.equals(nick.substring(wordLen, i), minStr.substring(wordLen, i)))
+                                continue OUTER;
+                        }
+                        inputText.getText().replace(begin, cur, minStr.substring(0, i));
+                        break;
+                    }
+                    tab.putLine(new TextEvent(TextEvent.Type.ERROR, toSend));
+                }
             }
         });
 
         if(tabId == -1)
-            ((MainScreen)getActivity()).getTabAdapter().notifyDataSetChanged();
+            mainScreen.getTabAdapter().notifyDataSetChanged();
 
         return view;
     }
 
     private void sendInput(TextView v)
     {
-        ServiceApplication.getService().onTextEntered(tabId, v.getText().toString());
+        mainScreen.getService().onTextEntered(tabId, v.getText().toString());
         v.setText("");
     }
 

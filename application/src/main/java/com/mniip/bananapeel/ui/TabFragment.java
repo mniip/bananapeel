@@ -146,7 +146,7 @@ public class TabFragment extends Fragment
                 ArrayList<String> list = new ArrayList<String>();
 
                 if (tab.serverTab.server.config.isChannel(word));// todo: channellist
-                else if (word != "" && begin == 0 && word.charAt(begin) == '/');// todo: commandlist
+                else if (!word.isEmpty() && begin == 0 && word.charAt(begin) == '/');// todo: commandlist
                 else
                 {
                     for(NickListEntry nick : tab.nickList)

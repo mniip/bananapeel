@@ -559,7 +559,7 @@ public class IRCServer
 
 					String request = "";
 
-					List<String> wantCaps = Arrays.asList("account-notify", "extended-join", "multi-prefix", "server-time", "znc.in/server-time", "znc.in/server-time-iso");
+					List<String> wantCaps = new ArrayList<>(Arrays.asList("account-notify", "extended-join", "multi-prefix", "server-time", "znc.in/server-time", "znc.in/server-time-iso"));
 					if(srv.preferences.getAuthMode().equals("sasl"))
 						wantCaps.add("sasl");
 					for(String cap : wantCaps)

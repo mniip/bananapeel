@@ -174,7 +174,7 @@ public class TabFragment extends Fragment
                 }
 
                 if(result.size() == 1)
-                    inputText.getText().replace(begin, cur, result.get(0) + ", ");
+                    inputText.getText().replace(begin, cur, result.get(0) + (begin == 0 ? ", " : " "));
 
                 else if(result.size() > 1)
                 {

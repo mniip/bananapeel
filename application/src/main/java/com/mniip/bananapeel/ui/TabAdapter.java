@@ -4,10 +4,10 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.widget.DrawerLayout;
+import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -24,8 +24,8 @@ public class TabAdapter extends PagerAdapter
     private MainScreen mainScreen;
 
     private TabFragment curTab;
-    private IntMap<TabFragment> tabFragments = new IntMap<>();
-    private ArrayList<Fragment.SavedState> savedStates = new ArrayList<>();
+    private IntMap<TabFragment> tabFragments = new IntMap<>(); // tabId -> activeTab
+    private IntMap<Fragment.SavedState> savedStates = new IntMap<>(); // tabId -> savedState
 
     private final FragmentManager fragmentManager;
     private FragmentTransaction curTransaction;
@@ -59,7 +59,7 @@ public class TabAdapter extends PagerAdapter
         TabFragment fragment = tabFragments.get(tabId);
         if(fragment == null)
         {
-            Fragment.SavedState fss = savedStates.get(position);
+            Fragment.SavedState fss = savedStates.get(tabId);
             fragment = new TabFragment();
             fragment.setTabId(tabId);
             fragment.setInitialSavedState(fss);
@@ -80,7 +80,7 @@ public class TabAdapter extends PagerAdapter
             if(curTransaction == null)
                 curTransaction = fragmentManager.beginTransaction();
             if(fragment.isActive())
-                savedStates.set(position, fragment.isAdded() ? fragmentManager.saveFragmentInstanceState(fragment) : null);
+                savedStates.put(fragment.getTabId(), fragment.isAdded() ? fragmentManager.saveFragmentInstanceState(fragment) : null);
             curTransaction.remove(fragment);
             tabFragments.remove(fragment.getTabId());
         }
@@ -151,7 +151,7 @@ public class TabAdapter extends PagerAdapter
     public void onTabAdded(int tabId)
     {
         Tab tab = service.getTabById(tabId);
-        savedStates.add(service.getPosById(tabId), null);
+        savedStates.put(tabId, null);
         notifyDataSetChanged();
     }
 
@@ -161,7 +161,7 @@ public class TabAdapter extends PagerAdapter
         if(fragment != null)
         {
             fragment.setInactive();
-            savedStates.remove((int)service.getPosById(tabId));
+            savedStates.remove(tabId);
             notifyDataSetChanged();
         }
     }
@@ -200,14 +200,12 @@ public class TabAdapter extends PagerAdapter
             TabFragment fragment = kv.getValue();
             if(curTransaction == null)
                 curTransaction = fragmentManager.beginTransaction();
-            savedStates.set(getItemPosition(fragment), fragment.isAdded() ? fragmentManager.saveFragmentInstanceState(fragment) : null);
+            savedStates.put(fragment.getTabId(), fragment.isAdded() ? fragmentManager.saveFragmentInstanceState(fragment) : null);
             curTransaction.remove(fragment);
             tabFragments.remove(fragment.getTabId());
         }
         Bundle state = new Bundle();
-        Fragment.SavedState[] fss = new Fragment.SavedState[savedStates.size()];
-        savedStates.toArray(fss);
-        state.putParcelableArray("states", fss);
+        state.putSparseParcelableArray("states", savedStates);
         return state;
     }
 
@@ -218,14 +216,14 @@ public class TabAdapter extends PagerAdapter
         {
             Bundle bundle = (Bundle)state;
             bundle.setClassLoader(loader);
-            Parcelable[] fss = bundle.getParcelableArray("states");
+            SparseArray fss = bundle.getSparseParcelableArray("states");
             savedStates.clear();
             tabFragments.clear();
             if(fss != null)
             {
-                for(int i = 0; i < fss.length; i++)
+                for(int i = 0; i < fss.size(); i++)
                 {
-                    savedStates.add((Fragment.SavedState)fss[i]);
+                    savedStates.put(fss.keyAt(i), (Fragment.SavedState)fss.valueAt(i));
                 }
             }
         }

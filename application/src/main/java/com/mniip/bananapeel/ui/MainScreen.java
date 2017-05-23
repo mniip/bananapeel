@@ -106,11 +106,24 @@ public class MainScreen extends FragmentActivity
 			ViewGroup group = (ViewGroup)findViewById(R.id.pager_container);
 			LayoutInflater.from(MainScreen.this).inflate(R.layout.pager, group, true);
 
-			ViewPager pager = (ViewPager)group.findViewById(R.id.view_pager);
+			final ViewPager pager = (ViewPager)group.findViewById(R.id.view_pager);
 			tabAdapter = new TabAdapter(getSupportFragmentManager(), MainScreen.this, service);
 			if(mSavedInstanceState != null)
 				pager.onRestoreInstanceState(mSavedInstanceState.getParcelable(((Integer)R.id.view_pager).toString()));
 			pager.setAdapter(tabAdapter);
+
+			ListView channelList = (ListView)findViewById(R.id.channel_list);
+			channelListAdapter = new ChannelListAdapter();
+			channelList.setAdapter(channelListAdapter);
+
+			channelList.setOnItemClickListener(new AdapterView.OnItemClickListener()
+			{
+				@Override
+				public void onItemClick(AdapterView<?> parent, View view, int position, long id)
+				{
+					pager.setCurrentItem(position, false);
+				}
+			});
 
 			if(service.getFrontTab().nickList != null)
 			{
@@ -259,9 +272,6 @@ public class MainScreen extends FragmentActivity
 		sParams.width = width;
 		channelList.setLayoutParams(sParams);
 
-		channelListAdapter = new ChannelListAdapter();
-		channelList.setAdapter(channelListAdapter);
-
 		final ListView nickList = (ListView)findViewById(R.id.nick_list);
 
 		nickList.setOnItemClickListener(new AdapterView.OnItemClickListener()
@@ -330,7 +340,6 @@ public class MainScreen extends FragmentActivity
 
 		DrawerLayout drawerLayout = (DrawerLayout)findViewById(R.id.drawerLayout);
 		drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, nickList);
-
 	}
 
 	@Override

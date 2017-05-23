@@ -5,10 +5,13 @@ import android.content.Intent;
 import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
 import android.text.Spannable;
+import android.text.Spanned;
 import android.text.TextPaint;
 import android.text.method.LinkMovementMethod;
+import android.text.style.CharacterStyle;
 import android.text.style.ClickableSpan;
 import android.text.style.UnderlineSpan;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,15 +26,40 @@ import java.util.List;
 
 public class TextLineAdapter extends RecyclerView.Adapter<TextLineAdapter.ViewHolder>
 {
-    private int tabId;
+    private final SelectableScrollbackView scrollbackView;
     private List<TextEvent> textLines;
     private int lastSize = 0;
 
-    public TextLineAdapter(int tabId)
+    private boolean lastSelecting = false;
+    private int lastStartLine;
+    private int lastEndLine;
+
+    public TextLineAdapter(SelectableScrollbackView scrollbackView, int tabId)
     {
         super();
-        this.tabId = tabId;
+        this.scrollbackView = scrollbackView;
         textLines = ServiceApplication.getService().getTabById(tabId).getTextLines();
+        scrollbackView.addOnSelectionChangedListener(new SelectableScrollbackView.OnSelectionChangedListener()
+        {
+            @Override
+            public void onSelectionChanged()
+            {
+                SelectableScrollbackView scrollbackView = TextLineAdapter.this.scrollbackView;
+
+                int start = scrollbackView.getSelectionStart()[0];
+                if(lastSelecting && lastStartLine < start)
+                    start = lastStartLine;
+                int end = scrollbackView.getSelectionEnd()[0];
+                if(lastSelecting && lastEndLine > end)
+                    end = lastEndLine;
+
+                notifyItemRangeChanged(start, end - start + 1);
+
+                lastSelecting = scrollbackView.isSelecting();
+                lastStartLine = scrollbackView.getSelectionStart()[0];
+                lastEndLine = scrollbackView.getSelectionEnd()[0];
+            }
+        });
     }
 
     @Override
@@ -71,6 +99,15 @@ public class TextLineAdapter extends RecyclerView.Adapter<TextLineAdapter.ViewHo
         }
     }
 
+    private static CharacterStyle selectionSpan = new CharacterStyle()
+    {
+        @Override
+        public void updateDrawState(TextPaint ds)
+        {
+            ds.bgColor = 0x3F007FFF;
+        }
+    };
+
     @Override
     public void onBindViewHolder(ViewHolder holder, int lineNum)
     {
@@ -85,6 +122,22 @@ public class TextLineAdapter extends RecyclerView.Adapter<TextLineAdapter.ViewHo
             spannable.setSpan(new LinkSpan(url), begin, end, spannable.getSpanFlags(link));
             spannable.removeSpan(link);
         }
+
+        if(scrollbackView.isSelecting())
+        {
+            int[] start = scrollbackView.getSelectionStart();
+            int[] end = scrollbackView.getSelectionEnd();
+            if(start[0] <= lineNum && end[0] >= lineNum)
+            {
+                Log.d("Select", "added span" + (start[0] == lineNum ? start[1] : 0) + "-" + (end[0] == lineNum ? end[1] : spannable.length()));
+                spannable.setSpan(selectionSpan, start[0] == lineNum ? start[1] : 0, end[0] == lineNum ? end[1] : spannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+            else
+                spannable.removeSpan(selectionSpan);
+        }
+        else
+            spannable.removeSpan(selectionSpan);
+
         holder.view.setText(spannable);
     }
 
@@ -97,9 +150,9 @@ public class TextLineAdapter extends RecyclerView.Adapter<TextLineAdapter.ViewHo
 
     static class ViewHolder extends RecyclerView.ViewHolder
     {
-        public TextView view;
+        private TextView view;
 
-        public ViewHolder(TextView view)
+        private ViewHolder(TextView view)
         {
             super(view);
             this.view = view;

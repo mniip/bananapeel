@@ -3,6 +3,7 @@ package com.mniip.bananapeel.ui;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -11,7 +12,6 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.support.v7.widget.RecyclerView;
 import android.widget.TextView;
 
 import com.mniip.bananapeel.R;
@@ -23,7 +23,7 @@ public class TabFragment extends Fragment
     private boolean sticky = true;
     private boolean active = true;
     private TextLineAdapter adapter;
-    private RecyclerView recycler;
+    private SelectableScrollbackView scrollback;
 
     private EditText inputText;
 
@@ -70,14 +70,14 @@ public class TabFragment extends Fragment
 
         View view = inflater.inflate(R.layout.tab_fragment, parent, false);
 
-        recycler = (RecyclerView)view.findViewById(R.id.recycler);
-        LinearLayoutManager manager = new LinearLayoutManager(recycler.getContext());
+        scrollback = (SelectableScrollbackView)view.findViewById(R.id.recycler);
+        LinearLayoutManager manager = new LinearLayoutManager(scrollback.getContext());
         manager.setStackFromEnd(true);
-        recycler.setLayoutManager(manager);
-        adapter = new TextLineAdapter(tabId);
-        recycler.setAdapter(adapter);
+        scrollback.setLayoutManager(manager);
+        adapter = new TextLineAdapter(scrollback, tabId);
+        scrollback.setAdapter(adapter);
         adapter.notifyDataSetChanged();
-        recycler.setOnScrollListener(new RecyclerView.OnScrollListener()
+        scrollback.setOnScrollListener(new RecyclerView.OnScrollListener()
         {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy)
@@ -132,7 +132,7 @@ public class TabFragment extends Fragment
     {
         adapter.onLinesAdded();
         if(sticky)
-            recycler.scrollToPosition(adapter.getItemCount() - 1);
+            scrollback.scrollToPosition(adapter.getItemCount() - 1);
     }
 
     public void onCleared()

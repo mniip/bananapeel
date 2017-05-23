@@ -34,6 +34,7 @@ public class MainScreen extends FragmentActivity
 {
 	private TabAdapter tabAdapter;
 	private NickListAdapter nickListAdapter;
+	private ChannelListAdapter channelListAdapter;
 
 	Bundle mSavedInstanceState;
 
@@ -41,6 +42,7 @@ public class MainScreen extends FragmentActivity
 	{
 		return tabAdapter;
 	}
+
 	public NickListAdapter getNickListAdapter()
 	{
 		return nickListAdapter;
@@ -64,18 +66,21 @@ public class MainScreen extends FragmentActivity
 		public void onTabAdded(int tabId)
 		{
 			tabAdapter.onTabAdded(tabId);
+			channelListAdapter.onChannelListChanged();
 		}
 
 		@Override
 		public void onTabRemoved(int tabId)
 		{
 			tabAdapter.onTabRemoved(tabId);
+			channelListAdapter.onChannelListChanged();
 		}
 
 		@Override
 		public void onTabTitleChanged(int tabId)
 		{
 			tabAdapter.onTabTitleChanged(tabId);
+			channelListAdapter.onChannelListChanged();
 		}
 
 		@Override
@@ -103,11 +108,11 @@ public class MainScreen extends FragmentActivity
 
 			ViewPager pager = (ViewPager)group.findViewById(R.id.view_pager);
 			tabAdapter = new TabAdapter(getSupportFragmentManager(), MainScreen.this, service);
-			if (mSavedInstanceState != null)
+			if(mSavedInstanceState != null)
 				pager.onRestoreInstanceState(mSavedInstanceState.getParcelable(((Integer)R.id.view_pager).toString()));
 			pager.setAdapter(tabAdapter);
 
-			if (service.getFrontTab().nickList != null)
+			if(service.getFrontTab().nickList != null)
 			{
 				View nickList = findViewById(R.id.nick_list);
 				DrawerLayout drawerLayout = (DrawerLayout)findViewById(R.id.drawerLayout);
@@ -121,6 +126,45 @@ public class MainScreen extends FragmentActivity
 			getService().unsetListener(ircInterfaceListener);
 		}
 	};
+
+	public class ChannelListAdapter extends BaseAdapter
+	{
+		@Override
+		public int getCount()
+		{
+			IRCService service = getService();
+			if(service == null || service.getTabs() == null)
+				return 0;
+			return service.getTabsCount();
+		}
+
+		@Override
+		public Object getItem(int position)
+		{
+			return getService().getTabByPosition(position);
+		}
+
+		@Override
+		public long getItemId(int position)
+		{
+			return getService().getTabByPosition(position).id;
+		}
+
+		@Override
+		public View getView(int position, View convertView, ViewGroup parent)
+		{
+			if(convertView == null)
+				convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.channel_line, parent, false);
+
+			((TextView)convertView).setText(getService().getTabByPosition(position).getTitle());
+			return convertView;
+		}
+
+		public void onChannelListChanged()
+		{
+			notifyDataSetChanged();
+		}
+	}
 
 	public class NickListAdapter extends BaseAdapter
 	{
@@ -173,12 +217,12 @@ public class MainScreen extends FragmentActivity
 		}
 	}
 
-	private static class Pair
+	private static class CmdPair
 	{
 		public final String descr;
 		public final String cmd;
 
-		public Pair(String descr, String cmd)
+		public CmdPair(String descr, String cmd)
 		{
 			this.descr = descr;
 			this.cmd = cmd;
@@ -215,6 +259,9 @@ public class MainScreen extends FragmentActivity
 		sParams.width = width;
 		channelList.setLayoutParams(sParams);
 
+		channelListAdapter = new ChannelListAdapter();
+		channelList.setAdapter(channelListAdapter);
+
 		final ListView nickList = (ListView)findViewById(R.id.nick_list);
 
 		nickList.setOnItemClickListener(new AdapterView.OnItemClickListener()
@@ -225,17 +272,17 @@ public class MainScreen extends FragmentActivity
 				final String nick = getService().getFrontTab().nickList.getSecondary(position).nick;
 				AlertDialog.Builder builder = new AlertDialog.Builder(MainScreen.this);
 
-				final ArrayList<Pair> actions = new ArrayList<Pair>();
-				actions.add(new Pair("Private message", "/query"));
-				actions.add(new Pair("WhoIs", "/whois"));
-				actions.add(new Pair("Kick", "/kick"));
-				actions.add(new Pair("Ping", "/ping"));
-				actions.add(new Pair("Give op", "/op"));
-				actions.add(new Pair("Give voice", "/voice"));
-				actions.add(new Pair("Take op", "/deop"));
-				actions.add(new Pair("Take voice","/devoice"));
-				actions.add(new Pair("Ban","/ban"));
-				actions.add(new Pair("Unban","/unban"));
+				final ArrayList<CmdPair> actions = new ArrayList<CmdPair>();
+				actions.add(new CmdPair("Private message", "/query"));
+				actions.add(new CmdPair("WhoIs", "/whois"));
+				actions.add(new CmdPair("Kick", "/kick"));
+				actions.add(new CmdPair("Ping", "/ping"));
+				actions.add(new CmdPair("Give op", "/op"));
+				actions.add(new CmdPair("Give voice", "/voice"));
+				actions.add(new CmdPair("Take op", "/deop"));
+				actions.add(new CmdPair("Take voice","/devoice"));
+				actions.add(new CmdPair("Ban","/ban"));
+				actions.add(new CmdPair("Unban","/unban"));
 
 				builder.setTitle("Action list");
 				String descriptions[] = new String[actions.size()];

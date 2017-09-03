@@ -12,10 +12,12 @@ android:
 
 env:
     global:
-        - SDK_PATH=/usr/local/android-sdk-24.0.2/
-        - SDK_BUILD_TOOLS=/usr/local/android-sdk-24.0.2/build-tools/21.1.2/
-        - LIB_AARS="/usr/local/android-sdk-24.0.2/extras/android/m2repository/com/android/support/support-v4/24.0.0/support-v4-24.0.0.aar /usr/local/android-sdk-24.0.2/extras/android/m2repository/com/android/support/recyclerview-v7/24.0.0/recyclerview-v7-24.0.0.aar"
-        - ANDROID_TARGET_SDK=10
+        - ANDROID_TARGET_SDK=16
 
 script:
+    - for i in /usr/local/android-sdk-*/; do export SDK_PATH="$i"; done
+    - for i in "$SDK_PATH"/build-tools/*.*.*/; do export SDK_BUILD_TOOLS="$i"; done
+    - for i in "$SDK_PATH"/extras/android/m2repository/com/android/support/support-v4/*.*.*/support-v4-*.*.*.aar; do export SUPPORT_AAR="$i"; done
+    - for i in "$SDK_PATH"/extras/android/m2repository/com/android/support/recyclerview-v7/*.*.*/recyclerview-v7-*.*.*.aar; do export RECYCLERVIEW_AAR="$i"; done
+    - export LIB_AARS="$SUPPORT_AAR $RECYCLERVIEW_AAR"
     - make

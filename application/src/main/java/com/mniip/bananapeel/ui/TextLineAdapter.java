@@ -11,7 +11,6 @@ import android.text.method.LinkMovementMethod;
 import android.text.style.CharacterStyle;
 import android.text.style.ClickableSpan;
 import android.text.style.UnderlineSpan;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -128,10 +127,7 @@ public class TextLineAdapter extends RecyclerView.Adapter<TextLineAdapter.ViewHo
             int[] start = scrollbackView.getSelectionStart();
             int[] end = scrollbackView.getSelectionEnd();
             if(start[0] <= lineNum && end[0] >= lineNum)
-            {
-                Log.d("Select", "added span" + (start[0] == lineNum ? start[1] : 0) + "-" + (end[0] == lineNum ? end[1] : spannable.length()));
                 spannable.setSpan(selectionSpan, start[0] == lineNum ? start[1] : 0, end[0] == lineNum ? end[1] : spannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
             else
                 spannable.removeSpan(selectionSpan);
         }

@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
-import android.util.Log;
 
 import com.mniip.bananapeel.R;
 import com.mniip.bananapeel.ServiceApplication;
@@ -91,7 +90,6 @@ public class IRCService extends Service
 		tab.server = new IRCServer(this, tab, null);
 		frontTab = tab;
 
-		Log.d("BananaPeel", "Service created");
 		super.onCreate();
 
 		Notification n = new NotificationCompat.Builder(this)
@@ -107,7 +105,6 @@ public class IRCService extends Service
 	@Override
 	public void onDestroy()
 	{
-		Log.d("BananaPeel", "Service destroyed");
 		super.onDestroy();
 		((ServiceApplication)getApplicationContext()).onServiceStopped();
 	}

@@ -4,7 +4,6 @@ import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,7 +20,6 @@ import com.mniip.bananapeel.util.TextEvent;
 
 import java.text.Collator;
 import java.util.ArrayList;
-import java.util.List;
 
 public class TabFragment extends Fragment
 {
@@ -61,7 +59,6 @@ public class TabFragment extends Fragment
     @Override
     public void onSaveInstanceState(Bundle out)
     {
-        Log.d("BananaPeel","fragment.onSaveInstanceState");
         super.onSaveInstanceState(out);
         out.putInt("tabId", tabId);
     }

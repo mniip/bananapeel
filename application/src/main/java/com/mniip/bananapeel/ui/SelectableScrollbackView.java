@@ -6,7 +6,6 @@ import android.graphics.drawable.Drawable;
 import android.support.v7.widget.RecyclerView;
 import android.text.Layout;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -304,7 +303,6 @@ public class SelectableScrollbackView extends RecyclerView
 
 	public void addOnSelectionChangedListener(OnSelectionChangedListener listener)
 	{
-		Log.d("addOn", listener.toString());
 		selectionChangedListeners.add(listener);
 	}
 

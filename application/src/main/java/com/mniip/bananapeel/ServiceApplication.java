@@ -2,7 +2,6 @@ package com.mniip.bananapeel;
 
 import android.app.Application;
 import android.content.Intent;
-import android.util.Log;
 
 import com.mniip.bananapeel.service.IRCService;
 
@@ -34,9 +33,7 @@ public class ServiceApplication extends Application
 	@Override
 	public void onCreate()
 	{
-		Log.d("BananaPeel", "App created");
 		super.onCreate();
-
 		ensureServiceStarted();
 	}
 }

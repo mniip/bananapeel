@@ -10,7 +10,6 @@ import android.os.IBinder;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -252,7 +251,6 @@ public class MainScreen extends FragmentActivity
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
-		Log.d("BananaPeel", "MainActivity created");
 		super.onCreate(savedInstanceState);
 
 		((ServiceApplication)getApplication()).ensureServiceStarted();
@@ -350,7 +348,6 @@ public class MainScreen extends FragmentActivity
 	@Override
 	protected void onDestroy()
 	{
-		Log.d("BananaPeel", "MainActivity destroyed");
 		super.onDestroy();
 
 		unbindService(conn);

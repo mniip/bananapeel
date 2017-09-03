@@ -3,6 +3,7 @@ package com.mniip.bananapeel.ui;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
+import android.support.v4.view.ViewPager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Layout;
 import android.util.AttributeSet;
@@ -10,6 +11,7 @@ import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewParent;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
@@ -85,6 +87,48 @@ public class SelectableScrollbackView extends RecyclerView
 
 		startHandle = new CursorHandle(this, getContext().getResources().getDrawable(R.drawable.cursor_left));
 		endHandle = new CursorHandle(this, getContext().getResources().getDrawable(R.drawable.cursor_right));
+	}
+
+	@Override
+	protected void onAttachedToWindow()
+	{
+		super.onAttachedToWindow();
+		View view = this;
+		while(true)
+		{
+			ViewParent parent = view.getParent();
+			if(parent instanceof View)
+			{
+				view = (View)parent;
+				if(view instanceof ViewPager)
+				{
+					((ViewPager)view).addOnPageChangeListener(new ViewPager.OnPageChangeListener()
+					{
+						@Override
+						public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels)
+						{
+							updateHandles();
+						}
+
+						@Override
+						public void onPageSelected(int position) {}
+
+						@Override
+						public void onPageScrollStateChanged(int state) {}
+					});
+					break;
+				}
+			}
+			else
+				break;
+		}
+	}
+
+	@Override
+	protected void onDetachedFromWindow()
+	{
+		stopSelecting();
+		super.onDetachedFromWindow();
 	}
 
 	private boolean selecting = false;

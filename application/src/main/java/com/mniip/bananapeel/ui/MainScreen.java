@@ -36,8 +36,6 @@ public class MainScreen extends FragmentActivity
 	private NickListAdapter nickListAdapter;
 	private ChannelListAdapter channelListAdapter;
 
-	Bundle mSavedInstanceState;
-
 	public TabAdapter getTabAdapter()
 	{
 		return tabAdapter;
@@ -95,6 +93,8 @@ public class MainScreen extends FragmentActivity
 		return ServiceApplication.getService();
 	}
 
+	Bundle restoreState = null;
+	private boolean serviceConnected = false;
 	private final ServiceConnection conn = new ServiceConnection()
 	{
 		@Override
@@ -108,8 +108,6 @@ public class MainScreen extends FragmentActivity
 
 			final ViewPager pager = (ViewPager)group.findViewById(R.id.view_pager);
 			tabAdapter = new TabAdapter(getSupportFragmentManager(), MainScreen.this, service);
-			if(mSavedInstanceState != null)
-				pager.onRestoreInstanceState(mSavedInstanceState.getParcelable(((Integer)R.id.view_pager).toString()));
 			pager.setAdapter(tabAdapter);
 
 			ListView channelList = (ListView)findViewById(R.id.channel_list);
@@ -131,12 +129,21 @@ public class MainScreen extends FragmentActivity
 				DrawerLayout drawerLayout = (DrawerLayout)findViewById(R.id.drawerLayout);
 				drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, nickList);
 			}
+
+			serviceConnected = true;
+			if(restoreState != null)
+			{
+				MainScreen.super.onRestoreInstanceState(restoreState);
+				restoreState = null;
+			}
 		}
 
 		@Override
 		public void onServiceDisconnected(ComponentName cls)
 		{
 			getService().unsetListener(ircInterfaceListener);
+
+			serviceConnected = false;
 		}
 	};
 
@@ -245,8 +252,6 @@ public class MainScreen extends FragmentActivity
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
-		mSavedInstanceState = savedInstanceState;
-
 		Log.d("BananaPeel", "MainActivity created");
 		super.onCreate(savedInstanceState);
 
@@ -352,16 +357,16 @@ public class MainScreen extends FragmentActivity
 	}
 
 	@Override
-	public void onSaveInstanceState(Bundle savedInstanceState)
+	public void onRestoreInstanceState(Bundle savedInstanceState)
 	{
-		super.onSaveInstanceState(savedInstanceState);
-		ViewPager pager = (ViewPager)findViewById(R.id.view_pager);
-		if (pager != null)
+		if(serviceConnected)
 		{
-			savedInstanceState.putParcelable(((Integer)R.id.view_pager).toString(), pager.onSaveInstanceState());
+			restoreState = null;
+			super.onRestoreInstanceState(savedInstanceState);
 		}
+		else
+			restoreState = savedInstanceState;
 	}
-
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu)

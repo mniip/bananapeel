@@ -16,8 +16,6 @@ import com.mniip.bananapeel.service.IRCService;
 import com.mniip.bananapeel.service.Tab;
 import com.mniip.bananapeel.util.IntMap;
 
-import java.util.ArrayList;
-
 public class TabAdapter extends PagerAdapter
 {
     private IRCService service;
@@ -195,15 +193,8 @@ public class TabAdapter extends PagerAdapter
     @Override
     public Parcelable saveState()
     {
-        for(IntMap.KV<TabFragment> kv : tabFragments.pairs())
-        {
-            TabFragment fragment = kv.getValue();
-            if(curTransaction == null)
-                curTransaction = fragmentManager.beginTransaction();
+        for(TabFragment fragment : tabFragments)
             savedStates.put(fragment.getTabId(), fragment.isAdded() ? fragmentManager.saveFragmentInstanceState(fragment) : null);
-            curTransaction.remove(fragment);
-            tabFragments.remove(fragment.getTabId());
-        }
         Bundle state = new Bundle();
         state.putSparseParcelableArray("states", savedStates);
         return state;
@@ -217,14 +208,18 @@ public class TabAdapter extends PagerAdapter
             Bundle bundle = (Bundle)state;
             bundle.setClassLoader(loader);
             SparseArray fss = bundle.getSparseParcelableArray("states");
+            for(TabFragment fragment : tabFragments)
+            {
+                if(curTransaction == null)
+                    curTransaction = fragmentManager.beginTransaction();
+                curTransaction.remove(fragment);
+            }
             savedStates.clear();
             tabFragments.clear();
             if(fss != null)
             {
                 for(int i = 0; i < fss.size(); i++)
-                {
                     savedStates.put(fss.keyAt(i), (Fragment.SavedState)fss.valueAt(i));
-                }
             }
         }
     }

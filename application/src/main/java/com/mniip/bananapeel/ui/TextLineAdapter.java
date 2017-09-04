@@ -33,6 +33,11 @@ public class TextLineAdapter extends RecyclerView.Adapter<TextLineAdapter.ViewHo
     private int lastStartLine;
     private int lastEndLine;
 
+    public void notifyFromToChanged(int start, int end)
+    {
+        notifyItemRangeChanged(start, end - start + 1);
+    }
+
     public TextLineAdapter(SelectableScrollbackView scrollbackView, int tabId)
     {
         super();
@@ -45,18 +50,29 @@ public class TextLineAdapter extends RecyclerView.Adapter<TextLineAdapter.ViewHo
             {
                 SelectableScrollbackView scrollbackView = TextLineAdapter.this.scrollbackView;
 
+                boolean selecting = scrollbackView.isSelecting();
                 int start = scrollbackView.getSelectionStart()[0];
-                if(lastSelecting && lastStartLine < start)
-                    start = lastStartLine;
                 int end = scrollbackView.getSelectionEnd()[0];
-                if(lastSelecting && lastEndLine > end)
-                    end = lastEndLine;
+                if(lastSelecting)
+                    if(selecting)
+                    {
+                        if(lastStartLine < start)
+                            notifyFromToChanged(lastStartLine, start);
+                        else
+                            notifyFromToChanged(start, lastStartLine);
+                        if(lastEndLine < end)
+                            notifyFromToChanged(lastEndLine, end);
+                        else
+                            notifyFromToChanged(end, lastEndLine);
+                    }
+                    else
+                        notifyItemRangeChanged(lastStartLine, lastEndLine);
+                else
+                    notifyFromToChanged(start, end);
 
-                notifyItemRangeChanged(start, end - start + 1);
-
-                lastSelecting = scrollbackView.isSelecting();
-                lastStartLine = scrollbackView.getSelectionStart()[0];
-                lastEndLine = scrollbackView.getSelectionEnd()[0];
+                lastSelecting = selecting;
+                lastStartLine = start;
+                lastEndLine = end;
             }
         });
     }

@@ -243,6 +243,8 @@ public class SelectableScrollbackView extends RecyclerView
 			return new float[]{getWidth() / 2, 0, 0};
 		}
 		View view = manager.findViewByPosition(findViewHolderForAdapterPosition(line).getLayoutPosition());
+		if(view == null)
+			return new float[]{0, 0, 0};
 		Layout layout = ((TextView)view).getLayout();
 		float x = layout.getPrimaryHorizontal(pos);
 		int ln = layout.getLineForOffset(pos);

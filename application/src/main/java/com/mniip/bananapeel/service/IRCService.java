@@ -204,6 +204,7 @@ public class IRCService extends Service
 		Tab tab = tabs.get(tabId);
 		if(tab != null)
 			frontTab = tab;
+		frontTab.setActivityStatus(Tab.ActivityStatus.NONE);
 	}
 
 	public void changeNickList(Tab tab)

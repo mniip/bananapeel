@@ -12,7 +12,7 @@ import android.text.style.UpdateAppearance;
 
 public class IRCFormatting
 {
-	private static final int[] colors =
+	public static final int[] colors =
 		{
 			0xFFFFFFFF, 0xFF000000, 0xFF0000CC, 0xFF00CC00, 0xFFCC0000, 0xFFCCCC00, 0xFFCC00CC, 0xFFCC6600,
 			0xFFFFFF00, 0xFF00FF00, 0xFF00CCCC, 0xFF00FFFF, 0xFF0000FF, 0xFFFF00FF, 0xFF888888, 0xFFCCCCCC

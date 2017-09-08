@@ -170,15 +170,14 @@ public class TabAdapter extends PagerAdapter
     }
 
     @Override
-    public String getPageTitle(int position)
+    public CharSequence getPageTitle(int position)
     {
         if(service == null)
             return mainScreen.getText(R.string.app_name).toString();
         Tab tab = service.getTabByPosition(position);
         if(tab != null)
-            return tab.getTitle();
-        else
-            return "";
+            return tab.getTitleColored();
+        return "";
     }
 
     @Override

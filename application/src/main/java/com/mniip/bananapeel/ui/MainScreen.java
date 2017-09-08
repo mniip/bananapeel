@@ -27,7 +27,6 @@ import com.mniip.bananapeel.R;
 import com.mniip.bananapeel.ServiceApplication;
 
 import java.util.ArrayList;
-import java.util.Set;
 
 public class MainScreen extends FragmentActivity
 {
@@ -175,7 +174,7 @@ public class MainScreen extends FragmentActivity
 			if(convertView == null)
 				convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.channel_line, parent, false);
 
-			((TextView)convertView).setText(getService().getTabByPosition(position).getTitle());
+			((TextView)convertView).setText(getService().getTabByPosition(position).getTitleColored());
 			return convertView;
 		}
 

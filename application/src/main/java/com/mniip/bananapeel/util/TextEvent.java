@@ -20,6 +20,7 @@ public class TextEvent
 		RAW,
 		NUMERIC,
 		MESSAGE,
+		MESSAGE_HIGHLIGHT,
 		OUR_MESSAGE,
 		OUR_MSG,
 		NOTICE,
@@ -34,6 +35,7 @@ public class TextEvent
 		NICK_CHANGE,
 		MODE_CHANGE,
 		CTCP_ACTION,
+		CTCP_ACTION_HIGHLIGHT,
 		OUR_CTCP_ACTION,
 		CTCP_PRIVATE,
 		CTCP_CHANNEL,
@@ -78,6 +80,30 @@ public class TextEvent
 		return args;
 	}
 
+	public boolean isHighlight()
+	{
+		return type == MESSAGE_HIGHLIGHT || type == CTCP_ACTION_HIGHLIGHT;
+	}
+
+	public boolean isMessage()
+	{
+		return
+				type == MESSAGE ||
+				type == MESSAGE_HIGHLIGHT ||
+				type == OUR_MESSAGE ||
+				type == OUR_MSG ||
+				type == NOTICE ||
+				type == CHANNEL_NOTICE ||
+				type == OUR_NOTICE ||
+				type == CTCP_ACTION ||
+				type == CTCP_ACTION_HIGHLIGHT ||
+				type == OUR_CTCP_ACTION ||
+				type == CTCP_PRIVATE ||
+				type == CTCP_CHANNEL ||
+				type == OUR_CTCP ||
+				type == CTCP_REPLY;
+	}
+
 	private static Editable.Factory editableFactory = new Editable.Factory();
 
 	private static Editable formatColor(Spannable format, String... args)
@@ -115,6 +141,7 @@ public class TextEvent
 		templates.put(RAW, IRCFormatting.parse("$0"));
 		templates.put(NUMERIC, IRCFormatting.parse("\00304* ($0)\017 $1"));
 		templates.put(MESSAGE, IRCFormatting.parse("\00310<$2$0>\017 $1"));
+		templates.put(MESSAGE_HIGHLIGHT, IRCFormatting.parse("\00309<$2$0> $1"));
 		templates.put(OUR_MESSAGE, IRCFormatting.parse("\00304<$2$0>\017 $1"));
 		templates.put(OUR_MSG, IRCFormatting.parse("\00304>$0<\017 $1"));
 		templates.put(NOTICE, IRCFormatting.parse("-\00310$0\017- $1"));
@@ -129,6 +156,7 @@ public class TextEvent
 		templates.put(NICK_CHANGE, IRCFormatting.parse("\00302* \00310$0\00302 has changed nick to \00310$1"));
 		templates.put(MODE_CHANGE, IRCFormatting.parse("\00307* \00310$0\00307 has set mode \00306$1\017 $2"));
 		templates.put(CTCP_ACTION, IRCFormatting.parse("* \00310$2$0\017 $1"));
+		templates.put(CTCP_ACTION_HIGHLIGHT, IRCFormatting.parse("* \00309$2$0 $1"));
 		templates.put(OUR_CTCP_ACTION, IRCFormatting.parse("* \00304$2$0\017 $1"));
 		templates.put(CTCP_PRIVATE, IRCFormatting.parse("* $0 requested CTCP $1 $2"));
 		templates.put(CTCP_CHANNEL, IRCFormatting.parse("* $0 requested CTCP $1 $2"));

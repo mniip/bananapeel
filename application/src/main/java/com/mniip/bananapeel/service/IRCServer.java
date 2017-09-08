@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
@@ -248,6 +249,23 @@ public class IRCServer
 		if(nick.equals(defNick))
 			return defNickAlt;
 		return defNick;
+	}
+
+	private boolean containsNick(String nick, String text)
+	{
+		if(nick.length() == 0)
+			return false;
+		String regex = Pattern.quote(nick);
+		if(Character.isLetterOrDigit(nick.charAt(0)))
+			regex = "\\b" + regex;
+		if(Character.isLetterOrDigit(nick.charAt(nick.length() - 1)))
+			regex = regex + "\\b";
+		return Pattern.compile(regex).matcher(text).find();
+	}
+
+	private boolean containsOurNick(String text)
+	{
+		return containsNick(ourNick, text);
 	}
 
 	private Comparator<NickListEntry> nickListEntryComparator = NickListEntry.nickComparator(Collators.rfc1459());
@@ -813,14 +831,14 @@ public class IRCServer
 				Tab tab = srv.service.findTab(srv.tab, nick);
 				if(tab == null)
 					tab = srv.service.createTab(srv.tab, Tab.Type.QUERY, nick);
-				tab.putLine(new TextEvent(CTCP_ACTION, nick, args));
+				tab.putLine(new TextEvent(srv.containsOurNick(args) ? CTCP_ACTION_HIGHLIGHT : CTCP_ACTION, nick, args));
 				return true;
 			}
 			else
 			{
 				Tab tab = srv.service.findTab(srv.tab, target);
 				if(tab != null)
-					tab.putLine(new TextEvent(CTCP_ACTION, nick, args));
+					tab.putLine(new TextEvent(srv.containsOurNick(args) ? CTCP_ACTION_HIGHLIGHT : CTCP_ACTION, nick, args));
 				return tab != null;
 			}
 
@@ -876,14 +894,14 @@ public class IRCServer
 					Tab tab = srv.service.findTab(srv.tab, nick);
 					if(tab == null)
 						tab = srv.service.createTab(srv.tab, Tab.Type.QUERY, nick);
-					tab.putLine(new TextEvent(time, MESSAGE, nick, text));
+					tab.putLine(new TextEvent(time, srv.containsOurNick(text) ? MESSAGE_HIGHLIGHT : MESSAGE, nick, text));
 					return true;
 				}
 				else
 				{
 					Tab tab = srv.service.findTab(srv.tab, target);
 					if(tab != null)
-						tab.putLine(new TextEvent(time, MESSAGE, nick, text));
+						tab.putLine(new TextEvent(time, srv.containsOurNick(text) ? MESSAGE_HIGHLIGHT : MESSAGE, nick, text));
 					return tab != null;
 				}
 			}
